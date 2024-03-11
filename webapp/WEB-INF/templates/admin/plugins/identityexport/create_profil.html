@@ -1,0 +1,80 @@
+<#include "manageextraction_tabs.html" />
+<@tabs2 tab="profil" />
+<@box>
+	<@boxHeader title='#i18n{identityexport.create_profil.title}' />
+	<@boxBody>
+    <@tform name='create_profil' action='jsp/admin/plugins/identityexport/ManageProfils.jsp' >
+
+        <@messages errors=errors />
+        <@input type="hidden" id="id" name="id"/>
+        <@input type="hidden" value="${token}" name="token" />
+
+		<@formGroup labelFor='name' labelKey='#i18n{identityexport.modify_profil.labelName}' mandatory=true>
+			<@input type='text' id='name' name='name'  maxlength=255 value='${profil.name!\'\'}'  />
+		</@formGroup>
+		<@formGroup labelFor='certification' labelKey='#i18n{identityexport.modify_profil.labelCertification}' mandatory=true>
+			<@select name='certification' items=lstCertif id='certification' default_value='${profil.certification!\'\'}' sort=true />-
+		</@formGroup>
+		<@formGroup labelFor='file_name' labelKey='#i18n{identityexport.modify_profil.labelFileName}' mandatory=true>
+			<@input type='text' id='file_name' name='file_name'  maxlength=255 value='${profil.fileName!\'\'}' />
+		</@formGroup>
+		<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelMonparis}' mandatory=true>
+          	<@checkBox id="monParis" name="monParis"  value="1" checked=profil.monParis!'false' />
+		</@formGroup>
+		<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelAutoExtract}' mandatory=true>
+          	<@checkBox id="autoExtract" name="autoExtract"  value="1" checked=profil.autoExtract!'false' />
+		</@formGroup>
+		<@formGroup labelFor='name' labelKey='#i18n{identityexport.modify_profil.labelPassword}' mandatory=true>
+			<@input type='password' id='password' name='password'  maxlength=255 value='${profil.password!\'\'}' />
+			<@button name='copy' id='copy' title='#i18n{identityexport.modify_profil.labelGeneratePassword}' color='btn-danger' params='onclick="generateLocalPassword()"'  />
+		</@formGroup>
+				
+		<@actionButtons button1Name="action_createProfil" button2Name="view_manageProfil"/>
+    </@tform>
+	</@boxBody>
+</@box>
+
+<script>
+function generateLocalPassword( ){
+
+    const lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+    let password = "";
+    let passwordLength = Math.floor(Math.random() * 4) + 12;
+
+    // Use at least one character from each character set
+
+    password +=  lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+    password +=  uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+    password +=  numbers.charAt(Math.floor(Math.random() * numbers.length));
+    password +=  symbols.charAt(Math.floor(Math.random() * symbols.length));
+
+    // Use remaining characters from any character set
+    let remainingLength = passwordLength - 4;
+    for (let i = 0; i < remainingLength; i++) {
+      let characterSet = Math.floor(Math.random() * 4);
+      switch (characterSet) {
+        case 0:
+          password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+          break;
+        case 1:
+          password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+          break;
+        case 2:
+          password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+          break;
+        case 3:
+          password += symbols.charAt(Math.floor(Math.random() * symbols.length));
+          break;
+
+      }
+
+    }
+
+    document.getElementById("password").value =  password;
+
+  }
+</script>

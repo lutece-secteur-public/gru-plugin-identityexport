@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd" >
+
+    <bean id="identityexport.extractionDAO" class="fr.paris.lutece.plugins.identityexport.business.ExtractionDAO" />
+    <bean id="identityexport.profilDAO" class="fr.paris.lutece.plugins.identityexport.business.ProfilDAO" />
+    <bean id="identityexport.ExtractStoreDAO" class="fr.paris.lutece.plugins.identityexport.business.ExtractStoreDAO" />
+
+	<bean id="identitystore.httpAccessTransport" class="fr.paris.lutece.plugins.identitystore.v3.web.rs.service.HttpAccessTransport" >
+            <property name="apiEndPointUrl">
+               <value>${identityexport.identitystore.apiEndPointUrl}</value>
+            </property>
+     </bean>
+
+    <bean id="identity.restTransport.httpAccess" class="fr.paris.lutece.plugins.identitystore.v3.web.rs.service.IdentityTransportRest">
+        <constructor-arg ref="identitystore.httpAccessTransport"/>
+    </bean>
+
+    <!-- IdentityService impl -->
+    <bean id="identity.identityService" class="fr.paris.lutece.plugins.identitystore.v3.web.service.IdentityService">
+        <constructor-arg ref="identity.restTransport.httpAccess"/>
+    </bean>
+    
+    <!-- ReferentialIdentityService impl -->
+    <bean id="referential.identityService" class="fr.paris.lutece.plugins.identitystore.v3.web.service.ReferentialService">
+        <constructor-arg ref="referential.restTransport.httpAccess"/>
+    </bean>
+    
+    <bean id="referential.restTransport.httpAccess" class="fr.paris.lutece.plugins.identitystore.v3.web.rs.service.ReferentialTransportRest">
+        <constructor-arg ref="identitystore.httpAccessTransport"/>
+    </bean>
+    
+    <bean id="defaultFileDownloadUrlService" class="fr.paris.lutece.portal.service.file.implementation.DefaultFileDownloadService" />
+    <bean id="defaultFileNoRBACService" class="fr.paris.lutece.portal.service.file.implementation.DefaultFileNoRBACService" />
+
+    <bean id="localFileSystemDirectoryFileService" class="fr.paris.lutece.plugins.identityexport.service.file.implementation.LocalFileSystemDirectoryFileService" >
+            <constructor-arg value="${identityexport.filesystem.path}" />
+            <constructor-arg ref="defaultFileDownloadUrlService" />
+            <constructor-arg ref="defaultFileNoRBACService" />
+            <property name="name" value="localFileSystemDirectoryFileService" />
+    </bean>
+</beans>

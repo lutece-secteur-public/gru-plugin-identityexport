@@ -1,0 +1,15 @@
+<#macro tabs2 tab >
+<@tabs>
+	<@tabList>
+			
+			<li <#if tab="profil">class="active"</#if>>
+				<@aButton href="jsp/admin/plugins/identityexport/ManageProfils.jsp">#i18n{identityexport.manage_profils.pageTitle}</@aButton>
+			</li>
+			<li <#if tab="extraction">class="active"</#if>>
+				<@aButton href="jsp/admin/plugins/identityexport/ManageExtractions.jsp">#i18n{identityexport.manage_extractions.pageTitle}</@aButton>
+			</li>
+			
+	</@tabList>
+</@tabs>
+
+</#macro>

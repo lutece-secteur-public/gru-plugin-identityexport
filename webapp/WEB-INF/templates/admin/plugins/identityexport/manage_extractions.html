@@ -1,0 +1,67 @@
+<#include "manageextraction_tabs.html" />
+<@tabs2 tab="extraction" />
+
+<@box>
+	<@boxHeader title='#i18n{identityexport.manage_extraction.title}' boxTools=true>
+		<@tform class='form-inline pull-right' name='manage_extraction' action='jsp/admin/plugins/identityexport/ManageExtractions.jsp'>
+			<@button type='submit' name='view_createExtraction' buttonIcon='plus' title='#i18n{identityexport.manage_extractions.buttonAdd}' />
+		</@tform>
+	</@boxHeader>
+	<@boxBody>    
+    <@messages infos=infos />
+    <@paginationAdmin paginator=paginator combo=1 />
+    <div class="clearfix"></div>
+    <@table>
+        <tr>
+            <th>#i18n{identityexport.manage_extractions.columnField}</th>
+            <th>#i18n{identityexport.manage_extractions.columnProfil}</th>
+            <th>#i18n{portal.util.labelActions}</th>
+        </tr>
+        <@tableHeadBodySeparator />
+        <#list extraction_list as extraction >
+        <tr>
+            <td>
+				${extraction.key}
+			</td>
+			<td>
+				${lstProfils[extraction.idProfil?c]}
+			</td>
+        	<td>
+				<@aButton href='jsp/admin/plugins/identityexport/ManageExtractions.jsp?view=modifyExtraction&id=${extraction.id}' title='#i18n{portal.util.labelModify}' hideTitle=['all'] buttonIcon='pencil' />
+						
+				<@aButton href='jsp/admin/plugins/identityexport/ManageExtractions.jsp?action=confirmRemoveExtraction&id=${extraction.id}' title='#i18n{portal.util.labelDelete}' buttonIcon='trash' hideTitle=['all'] color='btn-danger'  />
+
+	        </td>
+        </tr>
+        </#list>
+    </@table>
+
+    <@paginationAdmin paginator=paginator />
+        
+
+  </@boxBody>
+</@box>
+
+
+<script>
+document.addEventListener( "DOMContentLoaded", function(){
+	let i = 0;
+	if ( i == 0 ){
+    i = 1;
+    const elem = document.getElementById('loading');
+    let width = 30;
+    const idInterval = setInterval( progressFrame, 2000);
+    function progressFrame() {
+      if ( width >= 100 ) {
+        clearInterval( idInterval );
+        i = 0;
+      } else {
+        width++;
+        elem.style.width = width + "%";
+        elem.setAttribute('aria-value-now', width )
+        elem.textConent = width + "%";
+      }
+    }
+	}
+});
+</script>

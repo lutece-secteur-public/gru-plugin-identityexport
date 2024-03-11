@@ -1,0 +1,22 @@
+<#include "manageextraction_tabs.html" />
+<@tabs2 tab="certification" />
+
+
+<@box>
+	<@boxHeader title='#i18n{identityexport.modify_certification.title}' />
+	<@boxBody>
+    <@tform class="form-horizontal" method="post" name="modify_certification" action="jsp/admin/plugins/identityexport/ManageCertifications.jsp" >
+			<@messages errors=errors />
+			<@input type="hidden" id="id" name="id" value="${certification.id}"/>
+			<@input type="hidden" value="${token}" name="token" />
+			
+			<@formGroup labelFor='name' labelKey='#i18n{identityexport.modify_certification.labelName}' mandatory=true>
+				<@input type='text' id='name' name='name'  maxlength=255 value='${certification.name!\'\'}' tabIndex='0' />
+			</@formGroup>
+			<@formGroup labelFor='level' labelKey='#i18n{identityexport.modify_certification.labelLevel}' mandatory=true>
+				<@select name='level' items=lstCertif id='level' sort=true />
+			</@formGroup>
+        <@actionButtons button1Name="action_modifyCertification" button2Name="view_manageCertification"/>
+    </@tform>
+	</@boxBody>
+</@box>

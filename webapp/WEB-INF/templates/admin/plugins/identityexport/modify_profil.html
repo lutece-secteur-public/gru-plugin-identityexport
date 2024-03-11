@@ -1,0 +1,34 @@
+<#include "manageextraction_tabs.html" />
+<@tabs2 tab="profil" />
+
+
+<@box>
+	<@boxHeader title='#i18n{identityexport.modify_profil.title}' />
+	<@boxBody>
+    <@tform class="form-horizontal" method="post" name="modify_profil" action="jsp/admin/plugins/identityexport/ManageProfils.jsp" >
+			<@messages errors=errors />
+			<@input type="hidden" id="id" name="id" value="${profil.id}"/>
+			<@input type="hidden" value="${token}" name="token" />
+			
+			<@formGroup labelFor='name' labelKey='#i18n{identityexport.modify_profil.labelName}' mandatory=true>
+				<@input type='text' id='name' name='name'  maxlength=255 value='${profil.name!\'\'}' tabIndex='0' />
+			</@formGroup>
+			<@formGroup labelFor='certification' labelKey='#i18n{identityexport.modify_profil.labelCertification}' mandatory=true>
+				<@select name='certification' items=lstCertif id='certification' default_value='${profil.certification!\'\'}' sort=true />
+			</@formGroup>
+			<@formGroup labelFor='file_name' labelKey='#i18n{identityexport.modify_profil.labelFileName}' mandatory=true>
+				<@input type='text' id='file_name' name='file_name'  maxlength=255 value='${profil.fileName!\'\'}' tabIndex='2' />
+			</@formGroup>
+			<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelMonparis}' mandatory=true>
+				<@checkBox id="monParis" name="monParis"  value="1" checked=profil.monParis!'false' tabIndex='3' />
+			</@formGroup>
+			<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelAutoExtract}' mandatory=true>
+          	<@checkBox id="autoExtract" name="autoExtract"  value="1" checked=profil.autoExtract!'false' />
+			</@formGroup>
+			<@formGroup labelFor='name' labelKey='#i18n{identityexport.modify_profil.labelPassword}' mandatory=true>
+				<@input type='password' id='password' name='password'  maxlength=255 value='${profil.password!\'\'}' />
+			</@formGroup>
+        <@actionButtons button1Name="action_modifyProfil" button2Name="view_manageProfil"/>
+    </@tform>
+	</@boxBody>
+</@box>

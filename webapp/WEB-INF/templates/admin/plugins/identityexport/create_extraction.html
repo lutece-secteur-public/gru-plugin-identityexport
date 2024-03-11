@@ -1,0 +1,23 @@
+<#include "manageextraction_tabs.html" />
+<@tabs2 tab="extraction" />
+<@box>
+	<@boxHeader title='#i18n{identityexport.create_extraction.title}' />
+	<@boxBody>
+    <@tform name='create_extraction' action='jsp/admin/plugins/identityexport/ManageExtractions.jsp' >
+
+        <@messages errors=errors />
+        <@input type="hidden" id="id" name="id"/>
+        <@input type="hidden" value="${token}" name="token" />
+
+		<@formGroup labelFor='field' labelKey='#i18n{identityexport.modify_extraction.labelField}' mandatory=true>
+			<@select name='key' items=lstAttributes id='key' sort=true />
+		</@formGroup>
+		
+		<@formGroup labelFor='field' labelKey='#i18n{identityexport.modify_extraction.labelProfil}' mandatory=true>
+			<@select name='idProfil' items=lstProfils id='idProfil' sort=true />
+		</@formGroup>
+				
+		<@actionButtons button1Name="action_createExtraction" button2Name="view_manageExtraction"/>
+    </@tform>
+	</@boxBody>
+</@box>

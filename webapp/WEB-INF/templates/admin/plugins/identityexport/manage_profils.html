@@ -1,0 +1,141 @@
+<#include "manageextraction_tabs.html" />
+<@tabs2 tab="profil" />
+
+<@messages errors=errors />
+<@box>
+	<@boxHeader title='#i18n{identityexport.manage_profil.title}' boxTools=true>
+		<@tform class='form-inline pull-right' name='manage_profil' action='jsp/admin/plugins/identityexport/ManageProfils.jsp'>
+			<@button type='submit' name='view_createProfil' buttonIcon='plus' title='#i18n{identityexport.manage_profils.buttonAdd}' />
+		</@tform>
+	</@boxHeader>
+	<@boxBody>    
+    <@messages infos=infos />
+    <@paginationAdmin paginator=paginator combo=1 />
+    <div class="clearfix"></div>
+    <@table>
+        <tr>
+            <th>#i18n{identityexport.manage_profils.columnName}</th>
+            <th>#i18n{identityexport.manage_profils.columnCertification}</th>
+            <th>#i18n{identityexport.manage_profils.columnFileName}</th>
+            <th>#i18n{identityexport.manage_profils.columnMonparis}</th>
+            <th>#i18n{identityexport.manage_profils.columnAutoExtract}</th>
+            <th>#i18n{identityexport.manage_profils.columnPassword}</th>
+            <th>#i18n{identityexport.manage_profils.columnProgressBar}</th>
+            <th>#i18n{portal.util.labelActions}</th>
+            <th>#i18n{identityexport.manage_profils.columnDownload}</th>
+        </tr>
+        <@tableHeadBodySeparator />
+        <#list profil_list as profil >
+        <tr>
+            <td>
+				${profil.name}
+			</td>
+            <td>
+				${profil.certification}
+			</td>
+            <td>
+				${profil.fileName}
+			</td>
+			<td>
+				${profil.monParis?c}
+			</td>
+			<td>
+				${profil.autoExtract?c}
+			</td>
+			<td>
+				<@input type="password" id="password${profil.id}" name="password${profil.id}"  maxlength=255 value='${profil.password!\'\'}' params="disabled" />
+			</td>
+			<td>
+				<@progress token='idExtract' progressId="chargement${profil.id}" />
+			</td>
+        	<td>
+				<@aButton href='jsp/admin/plugins/identityexport/ManageProfils.jsp?view=modifyProfil&id=${profil.id}' title='#i18n{portal.util.labelModify}' hideTitle=['all'] buttonIcon='pencil' />
+						
+				<@aButton href='jsp/admin/plugins/identityexport/ManageProfils.jsp?action=confirmRemoveProfil&id=${profil.id}' title='#i18n{portal.util.labelDelete}' buttonIcon='trash' hideTitle=['all'] color='btn-danger'  />
+				
+				<@aButton href='jsp/admin/plugins/identityexport/ManageProfils.jsp?action=extractDataCSV&id=${profil.id}' title='#i18n{identityexport.manage_extractions.buttonExtract}' color='btn-danger'  />
+				
+				<@button name='copy' id='copy' title='#i18n{identityexport.manage_extractions.buttonCopyPassword}' color='btn-danger' params='onclick="copyFunction(${profil.id})"'  />
+	        </td>
+	        <td>
+	        	<a href="${urlFile[profil.id?c]}" download>
+				  telecharger
+				</a>
+	        </td>
+        </tr>
+        </#list>
+    </@table>
+
+    <@paginationAdmin paginator=paginator />
+
+  </@boxBody>
+</@box>
+
+<script>
+document.addEventListener( "DOMContentLoaded", function(){
+	
+	var arr=[<#list lstIdProfil as idProfilExtract>${idProfilExtract?c},</#list>];
+	for (var item in arr) {
+		   //alert(arr[item]);
+		   let i = 0;
+			if ( i == 0 ){
+		    i = 1;
+		    var strExtract = 'chargement'+arr[item];
+		    const elem = document.getElementById(strExtract);
+		    let width = 10;
+		    const idInterval = setInterval( progressFrame, 100);
+		    function progressFrame() {
+		      if ( width >= 100) {
+		        clearInterval( idInterval );
+		        i = 0;
+		      } else {
+		        width++;
+		        elem.style.width = width + "%";
+		        elem.setAttribute('aria-value-now', width )
+		        elem.textContent = width + "%";
+		      }
+		    }
+		}
+	
+	}
+});
+
+function progressBarExtract( idProfil )
+{
+	let i = 0;
+	if ( i == 0 ){
+    i = 1;
+    let strExtract = 'chargement'+idProfil;
+    
+    const elem = document.getElementById(strExtract);
+    let width = 10;
+    const idInterval = setInterval( progressFrame, 100);
+    function progressFrame() {
+      if ( width >= 100) {
+        clearInterval( idInterval );
+        i = 0;
+      } else {
+        width++;
+        elem.style.width = width + "%";
+        elem.setAttribute('aria-value-now', width )
+        elem.textContent = width + "%";
+      }
+    }
+	}
+}
+
+function copyFunction(idPassword) {
+	  // Get the text field
+	  var copyText = document.getElementById("password"+idPassword);
+
+	  // Select the text field
+	  copyText.select();
+	  copyText.setSelectionRange(0, 99999); // For mobile devices
+
+	   // Copy the text inside the text field
+	  navigator.clipboard.writeText(copyText.value);
+
+	  // Alert the copied text
+	  alert("Copied the text: " + copyText.value);
+	}
+</script>
