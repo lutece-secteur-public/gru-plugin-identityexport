@@ -155,7 +155,7 @@ public class LocalFileSystemDirectoryFileService implements IFileStoreServicePro
     */
    public File getFile( String strKey, boolean withPhysicalFile )
    {
-       if ( StringUtils.isBlank( strKey ) )
+       if ( StringUtils.isBlank( strKey ) || strKey.contains("/") || strKey.contains("\\") || strKey.contains("..") )
        {
            return null;
        }
