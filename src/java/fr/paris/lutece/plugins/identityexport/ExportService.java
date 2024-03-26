@@ -149,7 +149,6 @@ public class ExportService {
 
 		// store result in FileService
 		_fileStoreService.storeFile( zipFile );
-
 		AppLogService.debug( "fichier cree : " + genProfile.getName( ) );
 
 
