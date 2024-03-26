@@ -164,11 +164,9 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
         	mapLinkBO.put( String.valueOf( pro.getId() ), fileStoreService.getFileDownloadUrlBO( pro.getFileName() + ".zip" ) );
         }
         
-        fileStoreService.getFileDownloadUrlBO( lstProfils.get(0).getFileName() + ".zip" );
         
         Map<String, Object> model = getPaginatedListModel( request, MARK_PROFIL_LIST, _listIdProfils, JSP_MANAGE_PROFILS );
         model.put( MARK_LST_PROFIL_DAEMON, ExtractRequestHome.getIdExportRequestList() );
-        //model.put( MARK_FILE_PATH, AppPathService.getBaseUrl(request) + "downloads/" );
         model.put( MARK_FILE_LINK_URL, mapLinkBO );
 
         return getPage( PROPERTY_PAGE_TITLE_MANAGE_PROFILS, TEMPLATE_MANAGE_PROFILS, model );

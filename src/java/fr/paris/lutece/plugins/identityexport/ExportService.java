@@ -1,8 +1,6 @@
 package fr.paris.lutece.plugins.identityexport;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,8 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.paris.lutece.plugins.identityexport.business.ElasticsearchResponseJSON;
@@ -26,7 +22,7 @@ import fr.paris.lutece.plugins.identityexport.business.Profile;
 import fr.paris.lutece.plugins.identityexport.business.ProfileHome;
 import fr.paris.lutece.plugins.identityexport.export.Constants;
 import fr.paris.lutece.plugins.identityexport.export.ElasticService;
-import fr.paris.lutece.plugins.identityexport.export.ExportFileService;
+import fr.paris.lutece.plugins.identityexport.export.ProfileGenerator;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.common.AuthorType;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.common.RequestAuthor;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.referentiel.AttributeCertificationProcessusDto;
@@ -34,7 +30,6 @@ import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.referentiel.Processus
 import fr.paris.lutece.plugins.identitystore.v3.web.service.ReferentialService;
 import fr.paris.lutece.plugins.identitystore.web.exception.IdentityStoreException;
 import fr.paris.lutece.portal.business.file.File;
-import fr.paris.lutece.portal.business.physicalfile.PhysicalFile;
 import fr.paris.lutece.portal.service.file.FileService;
 import fr.paris.lutece.portal.service.file.IFileStoreServiceProvider;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
@@ -44,14 +39,16 @@ import fr.paris.lutece.portal.service.util.AppPropertiesService;
 public class ExportService {
 
 	private static ObjectMapper _mapper = (new ObjectMapper( )).configure( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false );
+	private static IFileStoreServiceProvider _fileStoreService = FileService.getInstance().getFileStoreServiceProvider( Constants.LOCAL_FILESYSTEM_DIRECTORY );
 
 	/**
 	 * Process Export
 	 * 
 	 * @param nIdProfil
 	 * @return message
+	 * @throws IOException 
 	 */
-	public static String generateExport( int nIdProfil )
+	public static String generateExport( int nIdProfile ) throws IOException
 	{
 		List<String> lstFields = new ArrayList<>( );
 		List<String> lstFieldsGuidCuid = new ArrayList<>();
@@ -59,178 +56,136 @@ public class ExportService {
 		lstFieldsGuidCuid.add( Constants.CUID_ATTRIBUTE_KEY );
 		lstFieldsGuidCuid.add( Constants.GUID_ATTRIBUTE_KEY );
 
+		Optional<Profile> optProfile = ProfileHome.findByPrimaryKey( nIdProfile );
 
-		List<ExportAttribute> lstAttributesByIdProfil = ExportAttributeHome.getExportAttributeListByIdProfil( nIdProfil );
+		List<ExportAttribute> lstAttributesByIdProfil = ExportAttributeHome.getExportAttributeListByIdProfil( nIdProfile );
 		for ( ExportAttribute attr : lstAttributesByIdProfil )
 		{
 			lstFields.add( attr.getKey( ) );
 		}
 
-		Optional<Profile> profil = ProfileHome.findByPrimaryKey( nIdProfil );
-
-		if ( lstFields == null || lstFields.isEmpty( ) ) 
+		if ( lstFields == null || lstFields.isEmpty( ) || optProfile.isEmpty( ) )
 		{
 			return "nothing to export";
 		}
 
+		ProfileGenerator genProfile = new ProfileGenerator ( optProfile.get( ) );
 
-		lstCertifCodes = getLstCertifCode( profil.get().getCertification( ) );
+		lstCertifCodes = getLstCertifCode( genProfile.getCertification( ) );
 
-		String strIdPitJSON = ElasticService.getElasticIdPit( );
-		String strIdPit = "";
-		String strSortId = "";
-		String[] strSortIdTab = null;
-		JsonNode node;
-		try {
-			node = new ObjectMapper().readTree(strIdPitJSON);
-			if (node.has("id")) {
-				strIdPit = node.get("id").asText( );
-				}
-		} catch (JsonMappingException e1) {
-			AppLogService.error( e1.getMessage(  ), e1 );
-		} catch (JsonProcessingException e1) {
-			AppLogService.error( e1.getMessage(  ), e1 );
-		}
-		
-		  
-		
-		String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, profil.get().isMonParis( ), strIdPit  );
+		String strIdPit = ElasticService.getElasticPitId( );
+
+		// get first result set of ELS
+		String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, genProfile.isMonParis( ), strIdPit  );
 
 		if ( resultElastic.isEmpty( ) )
 		{
 			return "nothing to export";
 		}
 
-		try 
+		// write headers
+		genProfile.addContent( getHeaders( lstFieldsGuidCuid, lstFields ) ); 
+
+		ElasticsearchResponseJSON response = _mapper.readValue(resultElastic, ElasticsearchResponseJSON.class);
+
+		List<Hit> lstHits = response.getHits( ).getHits( );
+
+		String strSortId ="";
+		String[] strSortIdTab = new String[] {};
+		StringBuilder strContent = new StringBuilder( );
+		for ( Hit hit : lstHits)
 		{
-			// preprare headers
-			StringJoiner joinerHeaders = new StringJoiner( AppPropertiesService.getProperty( Constants.PROPERTY_SEPARATOR ) );
+			// get one line
+			strContent.append( getLineFromHit( hit, lstFields ) );
 
-			for ( String fieldRequest : lstFieldsGuidCuid )
-			{	
-				joinerHeaders.add(fieldRequest);
-			}
-			for ( String fieldRequest : lstFields )
-			{	
-				joinerHeaders.add(fieldRequest);
-			}
-			
-			// add certifiers headers
-			for ( String fieldRequest : lstFields )
-			{	
-				joinerHeaders.add(fieldRequest+"_certifier");
-			}
-			String joinedHeadersString = joinerHeaders.toString();
-			
-			// write headers
-			//ExportFileService.addContentToFile( null, joinerHeaders.toString( ) );
-			String strTmpDirsLocation = System.getProperty("java.io.tmpdir");
-			ExportFileService.newFileCSV( profil.get( ).getFileName( ), joinedHeadersString, strTmpDirsLocation);
-			
-			
-			// get first result set of ELS
-			ElasticsearchResponseJSON response = _mapper.readValue(resultElastic, ElasticsearchResponseJSON.class);
-			String strScrollID = response.get_scroll_id( );
+			AppLogService.debug("shard : " + hit.getSort( )[0] );
 
-			//AppLogService.debug("SORT : " + response.get_scroll_id() );
-			List<Hit> lstHits = response.getHits().getHits();
-
-			StringBuilder strContent = new StringBuilder( );
-			for ( Hit hit : lstHits)
-			{
-				strContent.append( getLineFromHit( hit, lstFields ) );
-				//AppLogService.info("connectionID : " + hit.getSort( )[0] + " shard : " + hit.getSort( )[1] );
-				//AppLogService.info("shard : " + hit.getSort( )[0] );
-				strSortId = hit.getSort( )[0];
-				strSortIdTab = hit.getSort( );
-			}
-
-			// write first set
-			ExportFileService.addContentToFile( strContent.toString( ) );
-
-			// fetch results
-			//while ( strScrollID != null && !strScrollID.isEmpty( ) )
-			while ( strSortId != null && !strSortId.isEmpty() && strIdPit != null && !strIdPit.isEmpty())
-			{
-				//String resultElasticScroll = ElasticService.selectElasticFieldScroll( strScrollID );
-				String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, strIdPit);
-
-				if ( resultElasticScroll.isEmpty( ) )
-				{
-					strSortId = StringUtils.EMPTY;
-					continue;
-				}
-
-				ElasticsearchResponseJSON responseElasticSearch = _mapper.readValue(resultElasticScroll, ElasticsearchResponseJSON.class);
-				strIdPit = (String) responseElasticSearch.getPit_id();
-				
-				
-				if ( !responseElasticSearch.getHits( ).getHits( ).isEmpty( ) )
-				{
-					strScrollID = responseElasticSearch.get_scroll_id( );
-					
-					strContent = new StringBuilder( );
-					for ( Hit hit : responseElasticSearch.getHits( ).getHits( ) )
-					{
-						strContent.append( getLineFromHit( hit, lstFields ) );
-						//AppLogService.info(" shard : " + hit.getSort( )[0]);
-						strSortId = hit.getSort( )[0];
-						strSortIdTab = hit.getSort( );
-					}
-					
-					// write lines
-					ExportFileService.addContentToFile( strContent.toString( ) );
-				}
-				else
-				{
-					strSortId = StringUtils.EMPTY;
-				}
-			}
-
-
-			// finalize file (close ?)
-			ExportFileService.close( );
-			
-			// zip
-			ExportFileService.zipFile( profil.get( ).getFileName( ), profil.get( ).getPassword( ), strTmpDirsLocation );
-			
-			//IFileStoreServiceProvider fileStoreService = FileService.getInstance( ).getFileStoreServiceProvider( );
-			IFileStoreServiceProvider fileStoreService = FileService.getInstance().getFileStoreServiceProvider( Constants.LOCAL_FILESYSTEM_DIRECTORY );
-			
-			byte[] bytesFile;
-			try {
-				//bytesFile = Files.readAllBytes(Paths.get( AppPropertiesService.getProperty( Constants.PROPERTY_EXPORT_DIR_PATH ) + profil.get().getFileName() + ".zip" ));
-				bytesFile = Files.readAllBytes(Paths.get( strTmpDirsLocation + "/" + profil.get().getFileName() + ".zip" ) );
-			
-				//File TEST_FILE = new File(AppPropertiesService.getProperty( Constants.PROPERTY_EXPORT_DIR_PATH ) + profil.get().getFileName() + ".zip" );
-				File fileZIP = new File();
-	
-				PhysicalFile phyFile = new PhysicalFile();
-				phyFile.setValue( bytesFile );
-				fileZIP.setPhysicalFile( phyFile );
-				fileZIP.setMimeType( "application/zip" );
-				fileZIP.setTitle( profil.get().getFileName() + ".zip" );
-				
-				
-	            fileStoreService.storeFile(fileZIP);
-			
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-            
-			AppLogService.debug( "fichier cree : " + profil.get().getName( ) );
-
-
-		} catch (JsonProcessingException e) {
-			AppLogService.error( e.getMessage(  ), e );
+			strSortId = hit.getSort( )[0];
+			strSortIdTab = hit.getSort( );
 		}
+
+		// write first set of lines in file
+		genProfile.addContent( strContent.toString( ) );
+
+		// fetch results
+		while ( strSortId != null && !strSortId.isEmpty() && strIdPit != null && !strIdPit.isEmpty())
+		{
+			String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, strIdPit);
+
+			if ( resultElasticScroll.isEmpty( ) )
+			{
+				strSortId = StringUtils.EMPTY;
+				continue;
+			}
+
+			ElasticsearchResponseJSON responseElasticSearch = _mapper.readValue(resultElasticScroll, ElasticsearchResponseJSON.class);
+			strIdPit = (String) responseElasticSearch.getPit_id();
+
+			if ( !responseElasticSearch.getHits( ).getHits( ).isEmpty( ) )
+			{
+				strContent = new StringBuilder( );
+				for ( Hit hit : responseElasticSearch.getHits( ).getHits( ) )
+				{
+					strContent.append( getLineFromHit( hit, lstFields ) );
+
+					AppLogService.debug(" shard : " + hit.getSort( )[0]);
+
+					strSortId = hit.getSort( )[0];
+					strSortIdTab = hit.getSort( );
+				}
+
+				// write lines
+				genProfile.addContent( strContent.toString( ) );
+			}
+			else
+			{
+				strSortId = StringUtils.EMPTY;
+			}
+		}
+
+
+		// finalize and  zip
+		File zipFile = genProfile.finalizeAndGenerateZipFile( );
+
+		// store result in FileService
+		_fileStoreService.storeFile( zipFile );
+
+		AppLogService.debug( "fichier cree : " + genProfile.getName( ) );
+
 
 		lstFields = new ArrayList<>();
 
 
-		return "Export of id profile : " + nIdProfil + " done." ;
+		return "Export of id profile : " + nIdProfile + " done." ;
 
+	}
+
+	/**
+	 * prepare headers
+	 * 
+	 * @param lstFields
+	 * @return
+	 */
+	private static String getHeaders(List<String> lstFieldsGuidCuid, List<String> lstFields) 
+	{
+		StringJoiner joinerHeaders = new StringJoiner( AppPropertiesService.getProperty( Constants.PROPERTY_SEPARATOR ) );
+
+		for ( String fieldRequest : lstFieldsGuidCuid )
+		{	
+			joinerHeaders.add(fieldRequest);
+		}
+		for ( String fieldRequest : lstFields )
+		{	
+			joinerHeaders.add(fieldRequest);
+		}
+
+		// add certifiers headers
+		for ( String fieldRequest : lstFields )
+		{	
+			joinerHeaders.add(fieldRequest+"_certifier");
+		}
+
+		return joinerHeaders.toString( ) + System.lineSeparator();
 	}
 
 	/**
@@ -301,7 +256,7 @@ public class ExportService {
 		strContent.append( joinerFieldValues.toString( ) )
 		.append( AppPropertiesService.getProperty( Constants.PROPERTY_SEPARATOR ) )
 		.append( joinerCertifValue.toString( ) )
-		.append( System.lineSeparator() );
+		.append( System.lineSeparator( ) );
 
 		return strContent.toString( );
 	}

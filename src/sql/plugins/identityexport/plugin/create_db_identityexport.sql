@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS identityexport_profile ;
 CREATE TABLE identityexport_profile (
     id_profile int AUTO_INCREMENT,
     name varchar(255) default '' NOT NULL,
@@ -9,7 +10,7 @@ CREATE TABLE identityexport_profile (
 PRIMARY KEY (id_profile)
 );
 
-
+DROP TABLE IF EXISTS identityexport_profile_attributes ;
 CREATE TABLE identityexport_profile_attributes (
 	id_profile_attributes int AUTO_INCREMENT,
     id_profile int ,
@@ -17,7 +18,7 @@ CREATE TABLE identityexport_profile_attributes (
 PRIMARY KEY (id_profile_attributes)
 );
 
-
+DROP TABLE IF EXISTS identityexport_daemon_stack ;
 DROP TABLE IF EXISTS identityexport_daemon_stack;
 CREATE TABLE identityexport_daemon_stack (
 id_profile int,
