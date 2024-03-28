@@ -3,8 +3,6 @@ package fr.paris.lutece.plugins.identityexport.export;
 import java.util.List;
 import java.util.StringJoiner;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -47,8 +45,7 @@ public class ElasticService {
 		}
 
 		String searchRequest = "{\"size\": 10000 "
-				+ " ,\"_source\": {\n"
-
+						+ " ,\"_source\": {\n"
 	    				+ "            \"includes\": [ \"customerId\", \"connectionId\"," + joinerFields.toString( ) + " ]\n"
 	    				+ "}, \"query\" : {\n"
 	    				+ "        \"bool\": {\n"
@@ -62,13 +59,13 @@ public class ElasticService {
 	    				+ "            ]\n"
 	    				+ "        }\n"
 	    				+ "    },"
-	    				+ "\"pit\": {\n"
-	    				+ "    \"id\":  \"" + strIdPit + "\", \n"
-	    				+ "    \"keep_alive\": \"1m\"\n"
-	    				+ "  },"
+	    				//+ "\"pit\": {\n"
+	    				//+ "    \"id\":  \"" + strIdPit + "\", \n"
+	    				//+ "    \"keep_alive\": \"1m\"\n"
+	    				//+ "  },"
 	    				+ "  \"sort\": [ \n"
-	    				//+ "    {\"creationDate\": {\"order\": \"asc\"}}\n"
-	    				+ "    {\"_shard_doc\": \"desc\"}\n"
+	    				+ "    {\"customerId.keyword\": {\"order\": \"asc\"}}\n"
+	    				//+ "    ,{\"creationDate\": \"desc\"}\n"
 	    				+ "  ] "
 	    				+ "  }"
 	    				;
@@ -94,24 +91,53 @@ public class ElasticService {
 	 * @param strIdPit
 	 * @return
 	 */
-	public static String selectElasticFieldSearchAfter( String[] strIdSort, String strIdPit )
+	public static String selectElasticFieldSearchAfter( String[] strIdSort, String strIdPit, List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis )
 	{
+		StringJoiner joinerFields = new StringJoiner(",");
+		for ( String fieldRequest : lstFields )
+		{	
+			joinerFields.add("\"attributes." + fieldRequest + "\"");
+		}
+
+		StringJoiner joinerCertifCodes = new StringJoiner(",");
+		for ( String fieldCertifs : lstCertifLevel )
+		{	
+			joinerCertifCodes.add("\"" + fieldCertifs + "\"");
+		}
+		
+		
 		try {
 
 			String searchRequest = "{\"size\": 10000,"
-					+ "\"pit\": {\n"
-					+ "    \"id\":  \"" + strIdPit + "\", \n"
-					+ "    \"keep_alive\": \"1m\"\n"
-					+ "  }," 
-					+ "\"sort\": [\n"
-					//+ "    {\"creationDate\": \"asc\"}\n"
-					+ "    {\"_shard_doc\": \"desc\"}\n"
-					+ "  ],"
+					+ " \"_source\": {\n"
+    				+ "            \"includes\": [ \"customerId\", \"connectionId\"," + joinerFields.toString( ) + " ]\n"
+    				+ "}, \"query\" : {\n"
+    				+ "        \"bool\": {\n"
+    				+ "            \"must\": [\n"
+    				+ "               {\n"
+    				+ "                    \"terms\": { \"attributes.family_name.certifierCode\": [ " + joinerCertifCodes.toString( ) + " ] }\n"
+    				+ "               },\n"
+    				+ "               {\n"
+    				+ "                   \"match\": { \"monParisActive\" : "+ isMonParis + " }\n"
+    				+ "               }\n"
+    				+ "            ]\n"
+    				+ "        }\n"
+    				+ "    },"
+					//+ "\"pit\": {\n"
+					//+ "    \"id\":  \"" + strIdPit + "\", \n"
+					//+ "    \"keep_alive\": \"1m\"\n"
+					//+ "  }," 
 					+ " \"search_after\": [\n"
 					//+ " \"" + strIdSort[0] + "\"," + strIdSort[1] + "\n"
 					+ " \"" + strIdSort[0] + "\"\n"
 					+ "  ],\n"
-					+ "  \"track_total_hits\": false "
+					+ "\"sort\": [\n"
+					+ "    {\"customerId.keyword\": \"asc\"}\n"
+					//+ "    ,{\"creationDate\": \"desc\"}\n"
+					//+ "  ,  {\"_shard_doc\": \"desc\"}\n"
+					+ "  ]"
+					
+					//+ ",  \"track_total_hits\": false "
 					+ "}";
 
 
@@ -159,5 +185,6 @@ public class ElasticService {
 
 		return null;
 	}
+	
 }
 

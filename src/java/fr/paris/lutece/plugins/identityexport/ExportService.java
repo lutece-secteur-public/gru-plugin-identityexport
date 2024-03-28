@@ -76,7 +76,7 @@ public class ExportService {
 		String strIdPit = ElasticService.getElasticPitId( );
 
 		// get first result set of ELS
-		String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, genProfile.isMonParis( ), strIdPit  );
+		String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, optProfile.get().isMonParis( ), strIdPit  );
 
 		if ( resultElastic.isEmpty( ) )
 		{
@@ -108,9 +108,10 @@ public class ExportService {
 		genProfile.addContent( strContent.toString( ) );
 
 		// fetch results
-		while ( strSortId != null && !strSortId.isEmpty() && strIdPit != null && !strIdPit.isEmpty())
+		//while ( strSortId != null && !strSortId.isEmpty() && strIdPit != null && !strIdPit.isEmpty())
+		while ( strSortId != null && !strSortId.isEmpty() )
 		{
-			String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, strIdPit);
+			String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, strIdPit, lstFields, lstCertifCodes, optProfile.get().isMonParis( ));
 
 			if ( resultElasticScroll.isEmpty( ) )
 			{
@@ -119,7 +120,7 @@ public class ExportService {
 			}
 
 			ElasticsearchResponseJSON responseElasticSearch = _mapper.readValue(resultElasticScroll, ElasticsearchResponseJSON.class);
-			strIdPit = (String) responseElasticSearch.getPit_id();
+			//strIdPit = (String) responseElasticSearch.getPit_id();
 
 			if ( !responseElasticSearch.getHits( ).getHits( ).isEmpty( ) )
 			{
@@ -142,7 +143,6 @@ public class ExportService {
 				strSortId = StringUtils.EMPTY;
 			}
 		}
-
 
 		// finalize and  zip
 		File zipFile = genProfile.finalizeAndGenerateZipFile( );
