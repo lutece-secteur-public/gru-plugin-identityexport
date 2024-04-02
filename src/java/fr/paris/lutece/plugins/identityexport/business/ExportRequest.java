@@ -41,27 +41,25 @@ public class ExportRequest implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
-    // Variables declarations 
-    private int _nId;
-    
+    private String _strToken;    
     private int _nIdProfil;
 
     /**
-     * Returns the Id
-     * @return The Id
+     * Returns the Token
+     * @return The Token
      */
-    public int getId( )
+    public String getToken( )
     {
-        return _nId;
+        return _strToken;
     }
 
     /**
-     * Sets the Id
-     * @param nId The Id
+     * Sets the Token
+     * @param  The Token
      */ 
-    public void setId( int nId )
+    public void setToken( String strToken )
     {
-        _nId = nId;
+        _strToken = strToken;
     }
     
     /**

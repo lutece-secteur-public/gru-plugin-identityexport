@@ -32,7 +32,6 @@
  * License 1.0
  */
 
-
 package fr.paris.lutece.plugins.identityexport.business;
 
 import fr.paris.lutece.portal.service.plugin.Plugin;
@@ -47,197 +46,171 @@ import java.util.Optional;
 /**
  * This class provides Data Access methods for ExtractDaemon objects
  */
-public final class ExtractStoreDAO implements IExtractStoreDAO
-{
-    // Constants
-    private static final String SQL_QUERY_SELECT = "SELECT id_profile FROM identityexport_daemon_stack WHERE id_profile = ?";
-    private static final String SQL_QUERY_INSERT = "INSERT INTO identityexport_daemon_stack ( id_profile ) VALUES ( ? ) ";
-    private static final String SQL_QUERY_DELETE = "DELETE FROM identityexport_daemon_stack WHERE id_profile = ? ";
-    private static final String SQL_QUERY_UPDATE = "UPDATE identityexport_daemon_stack SET id_profile = ? WHERE id_profile = ?";
-    private static final String SQL_QUERY_SELECTALL = "SELECT id_profile FROM identityexport_daemon_stack";
-    private static final String SQL_QUERY_SELECTALL_ID = "SELECT id_profile FROM identityexport_daemon_stack";
-    private static final String SQL_QUERY_SELECTALL_BY_IDS = "SELECT id_profile FROM identityexport_daemon_stack WHERE id_profile IN (  ";
+public final class ExtractStoreDAO implements IExtractStoreDAO {
+	// Constants
+	private static final String SQL_QUERY_SELECT = "SELECT id_profile FROM identityexport_daemon_stack WHERE id_profile = ?";
+	private static final String SQL_QUERY_INSERT = "INSERT INTO identityexport_daemon_stack ( id_profile ) VALUES ( ? ) ";
+	private static final String SQL_QUERY_DELETE = "DELETE FROM identityexport_daemon_stack WHERE id_profile = ? ";
+	private static final String SQL_QUERY_UPDATE = "UPDATE identityexport_daemon_stack SET id_profile = ? WHERE id_profile = ?";
+	private static final String SQL_QUERY_SELECTALL = "SELECT id_profile FROM identityexport_daemon_stack";
+	private static final String SQL_QUERY_SELECTALL_ID = "SELECT id_profile FROM identityexport_daemon_stack";
+	private static final String SQL_QUERY_SELECTALL_BY_IDS = "SELECT id_profile FROM identityexport_daemon_stack WHERE id_profile IN (  ";
 
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public void insert( ExportRequest extractDaemon, Plugin plugin )
-    {
-        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_INSERT, Statement.RETURN_GENERATED_KEYS, plugin ) )
-        {
-            int nIndex = 1;
-            daoUtil.setInt( nIndex++ , extractDaemon.getIdProfil( ) );
-            
-            daoUtil.executeUpdate( );
-            if ( daoUtil.nextGeneratedKey( ) ) 
-            {
-                extractDaemon.setId( daoUtil.getGeneratedKeyInt( 1 ) );
-            }
-        }
-        
-    }
-
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public Optional<ExportRequest> load( int nKey, Plugin plugin )
-    {
-        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_SELECT, plugin ) )
-        {
-	        daoUtil.setInt( 1 , nKey );
-	        daoUtil.executeQuery( );
-	        ExportRequest extractDaemon = null;
-	
-	        if ( daoUtil.next( ) )
-	        {
-	            extractDaemon = new ExportRequest();
-	            int nIndex = 1;
-	            
-			    extractDaemon.setIdProfil( daoUtil.getInt( nIndex ) );
-	        }
-	
-	        return Optional.ofNullable( extractDaemon );
-        }
-    }
-
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public void delete( int nKey, Plugin plugin )
-    {
-        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_DELETE, plugin ) )
-        {
-	        daoUtil.setInt( 1 , nKey );
-	        daoUtil.executeUpdate( );
-        }
-    }
-
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public void store( ExportRequest extractDaemon, Plugin plugin )
-    {
-        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_UPDATE, plugin ) )
-        {
-	        int nIndex = 1;
-	        
-	        daoUtil.setInt( nIndex , extractDaemon.getId( ) );
-	
-	        daoUtil.executeUpdate( );
-        }
-    }
-
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public List<ExportRequest> selectExtractDaemonsList( Plugin plugin )
-    {
-        List<ExportRequest> extractDaemonList = new ArrayList<>(  );
-        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_SELECTALL, plugin ) )
-        {
-	        daoUtil.executeQuery(  );
-	
-	        while ( daoUtil.next(  ) )
-	        {
-	            ExportRequest extractDaemon = new ExportRequest(  );
-	            int nIndex = 1;
-	            
-			    extractDaemon.setIdProfil( daoUtil.getInt( nIndex ) );
-	
-	            extractDaemonList.add( extractDaemon );
-	        }
-	
-	        return extractDaemonList;
-        }
-    }
-    
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public List<Integer> selectIdExtractDaemonsList( Plugin plugin )
-    {
-        List<Integer> extractDaemonList = new ArrayList<>( );
-        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_SELECTALL_ID, plugin ) )
-        {
-	        daoUtil.executeQuery(  );
-	
-	        while ( daoUtil.next(  ) )
-	        {
-	            extractDaemonList.add( daoUtil.getInt( 1 ) );
-	        }
-	
-	        return extractDaemonList;
-        }
-    }
-    
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public ReferenceList selectExtractDaemonsReferenceList( Plugin plugin )
-    {
-        ReferenceList extractDaemonList = new ReferenceList();
-        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_SELECTALL, plugin ) )
-        {
-	        daoUtil.executeQuery(  );
-	
-	        while ( daoUtil.next(  ) )
-	        {
-	            extractDaemonList.addItem( daoUtil.getInt( 1 ) , daoUtil.getString( 2 ) );
-	        }
-	
-	        return extractDaemonList;
-    	}
-    }
-    
-    /**
-     * {@inheritDoc }
-     */
+	/**
+	 * {@inheritDoc }
+	 */
 	@Override
-	public List<ExportRequest> selectExtractDaemonsListByIds( Plugin plugin, List<Integer> listIds ) {
-		List<ExportRequest> extractDaemonList = new ArrayList<>(  );
-		
-		StringBuilder builder = new StringBuilder( );
+	public void insert(ExportRequest extractDaemon, Plugin plugin) {
+		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_INSERT, Statement.RETURN_GENERATED_KEYS, plugin)) {
+			int nIndex = 1;
+			daoUtil.setInt(nIndex++, extractDaemon.getIdProfil());
 
-		if ( !listIds.isEmpty( ) )
-		{
-			for( int i = 0 ; i < listIds.size(); i++ ) {
-			    builder.append( "?," );
+			daoUtil.executeUpdate( );
+
+		}
+
+	}
+
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public Optional<ExportRequest> load(int nKey, Plugin plugin) {
+		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_SELECT, plugin)) {
+			daoUtil.setInt(1, nKey);
+			daoUtil.executeQuery();
+			ExportRequest extractDaemon = null;
+
+			if (daoUtil.next()) {
+				extractDaemon = new ExportRequest();
+				int nIndex = 1;
+
+				extractDaemon.setIdProfil(daoUtil.getInt(nIndex));
 			}
-	
-			String placeHolders =  builder.deleteCharAt( builder.length( ) -1 ).toString( );
+
+			return Optional.ofNullable(extractDaemon);
+		}
+	}
+
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public void delete(int nKey, Plugin plugin) {
+		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_DELETE, plugin)) {
+			daoUtil.setInt(1, nKey);
+			daoUtil.executeUpdate();
+		}
+	}
+
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public void store(ExportRequest extractDaemon, Plugin plugin) {
+		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_UPDATE, plugin)) {
+			int nIndex = 1;
+
+			daoUtil.setInt(nIndex, extractDaemon.getIdProfil());
+
+			daoUtil.executeUpdate();
+		}
+	}
+
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public List<ExportRequest> selectExtractDaemonsList(Plugin plugin) {
+		List<ExportRequest> extractDaemonList = new ArrayList<>();
+		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_SELECTALL, plugin)) {
+			daoUtil.executeQuery();
+
+			while (daoUtil.next()) {
+				ExportRequest extractDaemon = new ExportRequest();
+				int nIndex = 1;
+
+				extractDaemon.setIdProfil(daoUtil.getInt(nIndex));
+
+				extractDaemonList.add(extractDaemon);
+			}
+
+			return extractDaemonList;
+		}
+	}
+
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public List<Integer> selectIdExtractDaemonsList(Plugin plugin) {
+		List<Integer> extractDaemonList = new ArrayList<>();
+		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_SELECTALL_ID, plugin)) {
+			daoUtil.executeQuery();
+
+			while (daoUtil.next()) {
+				extractDaemonList.add(daoUtil.getInt(1));
+			}
+
+			return extractDaemonList;
+		}
+	}
+
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public ReferenceList selectExtractDaemonsReferenceList(Plugin plugin) {
+		ReferenceList extractDaemonList = new ReferenceList();
+		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_SELECTALL, plugin)) {
+			daoUtil.executeQuery();
+
+			while (daoUtil.next()) {
+				extractDaemonList.addItem(daoUtil.getInt(1), daoUtil.getString(2));
+			}
+
+			return extractDaemonList;
+		}
+	}
+
+	/**
+	 * {@inheritDoc }
+	 */
+	@Override
+	public List<ExportRequest> selectExtractDaemonsListByIds(Plugin plugin, List<Integer> listIds) {
+		List<ExportRequest> extractDaemonList = new ArrayList<>();
+
+		StringBuilder builder = new StringBuilder();
+
+		if (!listIds.isEmpty()) {
+			for (int i = 0; i < listIds.size(); i++) {
+				builder.append("?,");
+			}
+
+			String placeHolders = builder.deleteCharAt(builder.length() - 1).toString();
 			String stmt = SQL_QUERY_SELECTALL_BY_IDS + placeHolders + ")";
-			
-			
-	        try ( DAOUtil daoUtil = new DAOUtil( stmt, plugin ) )
-	        {
-	        	int index = 1;
-				for( Integer n : listIds ) {
-					daoUtil.setInt(  index++, n ); 
+
+			try (DAOUtil daoUtil = new DAOUtil(stmt, plugin)) {
+				int index = 1;
+				for (Integer n : listIds) {
+					daoUtil.setInt(index++, n);
 				}
-	        	
-	        	daoUtil.executeQuery(  );
-	        	while ( daoUtil.next(  ) )
-		        {
-		        	ExportRequest extractDaemon = new ExportRequest(  );
-		            int nIndex = 1;
-		            
-				    extractDaemon.setIdProfil( daoUtil.getInt( nIndex ) );
-		            
-		            extractDaemonList.add( extractDaemon );
-		        }
-		
-		        daoUtil.free( );
-		        
-	        }
-	    }
+
+				daoUtil.executeQuery();
+				while (daoUtil.next()) {
+					ExportRequest extractDaemon = new ExportRequest();
+					int nIndex = 1;
+
+					extractDaemon.setIdProfil(daoUtil.getInt(nIndex));
+
+					extractDaemonList.add(extractDaemon);
+				}
+
+				daoUtil.free();
+
+			}
+		}
 		return extractDaemonList;
-		
+
 	}
 }

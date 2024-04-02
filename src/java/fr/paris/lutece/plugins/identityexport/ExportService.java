@@ -73,10 +73,8 @@ public class ExportService {
 
 		lstCertifCodes = getLstCertifCode( genProfile.getCertification( ) );
 
-		String strIdPit = ElasticService.getElasticPitId( );
-
 		// get first result set of ELS
-		String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, optProfile.get().isMonParis( ), strIdPit  );
+		String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, optProfile.get().isMonParis( )  );
 
 		if ( resultElastic.isEmpty( ) )
 		{
@@ -111,7 +109,7 @@ public class ExportService {
 		//while ( strSortId != null && !strSortId.isEmpty() && strIdPit != null && !strIdPit.isEmpty())
 		while ( strSortId != null && !strSortId.isEmpty() )
 		{
-			String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, strIdPit, lstFields, lstCertifCodes, optProfile.get().isMonParis( ));
+			String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, lstFields, lstCertifCodes, optProfile.get().isMonParis( ));
 
 			if ( resultElasticScroll.isEmpty( ) )
 			{
@@ -240,7 +238,7 @@ public class ExportService {
 				else
 				{
 					// for all other attributes
-					joinerFieldValues.add( resultField.get("value") );
+					joinerFieldValues.add( resultField.get("value").replace(System.getProperty("line.separator"), " / ") );
 				}
 
 				joinerCertifValue.add( resultField.get("certifierCode") );
@@ -270,7 +268,7 @@ public class ExportService {
 	 */
 	private static List<String> getLstCertifCode ( String certifierCode )
 	{
-		List<String> lstCertifCodes = new ArrayList<>( );
+		Map<String,String> mapCertifCodes = new HashMap<>();
 		String strLvlCode = "";
 		ReferentialService referentialService = SpringContextService.getBean( "referential.identityService" );
 		try {
@@ -297,7 +295,7 @@ public class ExportService {
 				{
 					if ( Integer.valueOf( attrCertif.getAttributeCertificationLevels().get(0).getLevel().getLevel() ) >= Integer.valueOf( strLvlCode ) )
 					{
-						lstCertifCodes.add( attrCertif.getCode( ) );
+						mapCertifCodes.put( attrCertif.getCode( ), null );
 					}
 				}
 			}
@@ -306,7 +304,7 @@ public class ExportService {
 			AppLogService.error(e.getMessage(), e);
 		}
 
-		return lstCertifCodes;
+		return new ArrayList<>( mapCertifCodes.keySet( ) ) ;
 	}
 
 }

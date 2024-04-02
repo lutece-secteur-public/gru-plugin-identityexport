@@ -21,8 +21,8 @@ public class ExtractDaemon extends Daemon {
 			for ( ExportRequest extra : lstExtractDaemonsList)
 			{				
 				ExtractRequestHome.remove( extra.getIdProfil( ) );
-				AppLogService.debug( "Trying to generate export of profile id : " + extra.getId( ) );
-				sb.append(  "Trying to generate export of profile id : " + extra.getId( ) + "\n");
+				AppLogService.debug( "Trying to generate export of profile id : " + extra.getIdProfil( ) );
+				sb.append(  "Trying to generate export of profile id : " + extra.getIdProfil( ) + "\n");
 			}
 			
 			for ( ExportRequest extra : lstExtractDaemonsList)
@@ -30,11 +30,11 @@ public class ExtractDaemon extends Daemon {
 				try 
 				{
 					ExportService.generateExport( extra.getIdProfil( ) );
-					sb.append( "Export generated of profile id : " + extra.getId( ) + "\n");
+					sb.append( "Export generated of profile id : " + extra.getIdProfil( ) + "\n");
 				}
 				catch (Exception e)
 				{
-					setLastRunLogs( "Error : an exception occured while generating export  of profile id " + extra.getId( ) + " : " + e.getMessage());
+					setLastRunLogs( "Error : an exception occured while generating export  of profile id " + extra.getIdProfil( ) + " : " + e.getMessage());
 					AppLogService.error( e.getMessage( ), e);
 				}
 			}

@@ -35,7 +35,7 @@ public class ElasticService {
 	 * @param strIdPit
 	 * @return
 	 */
-	public static String selectElasticField( List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis, String strIdPit )
+	public static String selectElasticField( List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis )
 	{
 
 		StringJoiner joinerFields = new StringJoiner(",");
@@ -78,6 +78,7 @@ public class ElasticService {
 
 		try 
 		{
+			AppLogService.debug("Request elastic : " + searchRequest);
 			return _elasticConnex.POST(AppPropertiesService.getProperty( Constants.PROPERTY_ELASTIC_PROVIDER_URL ) + "/_search" , searchRequest);
 
 		} 
@@ -97,7 +98,7 @@ public class ElasticService {
 	 * @param strIdPit
 	 * @return
 	 */
-	public static String selectElasticFieldSearchAfter( String[] strIdSort, String strIdPit, List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis )
+	public static String selectElasticFieldSearchAfter( String[] strIdSort, List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis )
 	{
 		StringJoiner joinerFields = new StringJoiner(",");
 		for ( String fieldRequest : lstFields )
@@ -146,7 +147,7 @@ public class ElasticService {
 					//+ ",  \"track_total_hits\": false "
 					+ "}";
 
-
+			AppLogService.debug("Request elastic : " + searchRequest);
 			return _elasticConnex.POST(AppPropertiesService.getProperty( Constants.PROPERTY_ELASTIC_PROVIDER_URL ) + "/_search" , searchRequest);
 
 		} catch (HttpAccessException e) {
