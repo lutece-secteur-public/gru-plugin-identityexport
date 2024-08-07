@@ -59,6 +59,7 @@ public final class ExtractionDAO implements IExtractionDAO
     private static final String SQL_QUERY_SELECTALL_ID = "SELECT id_profile_attributes FROM identityexport_profile_attributes";
     private static final String SQL_QUERY_SELECTALL_BY_IDS = "SELECT id_profile_attributes, attribute_key, id_profile FROM identityexport_profile_attributes WHERE id_profile_attributes IN (  ";
     private static final String SQL_QUERY_SELECTALL_BY_ID_PROFIL = "SELECT id_profile_attributes, attribute_key, id_profile FROM identityexport_profile_attributes WHERE id_profile = ? ";
+    private static final String SQL_QUERY_SELECTALL_ID_BY_ID_PROFIL = "SELECT id_profile_attributes FROM identityexport_profile_attributes WHERE id_profile = ? ";
 
     /**
      * {@inheritDoc }
@@ -290,6 +291,27 @@ public final class ExtractionDAO implements IExtractionDAO
 	        }
 	
 	        return extractionList;
+        }
+    }
+
+    /**
+     * {@inheritDoc }
+     */
+    @Override
+    public List<Integer> selectIdExtractionsListByIdProfil( final Plugin plugin, final int nIdProfil )
+    {
+        final List<Integer> idList = new ArrayList<>(  );
+        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_SELECTALL_BY_ID_PROFIL, plugin ) )
+        {
+            daoUtil.setInt( 1 , nIdProfil );
+            daoUtil.executeQuery(  );
+
+            while ( daoUtil.next(  ) )
+            {
+                idList.add( daoUtil.getInt( 1 ) );
+            }
+
+            return idList;
         }
     }
 }

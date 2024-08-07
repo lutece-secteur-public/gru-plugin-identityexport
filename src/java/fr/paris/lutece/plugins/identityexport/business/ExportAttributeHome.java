@@ -140,7 +140,7 @@ public final class ExportAttributeHome
     {
         return _dao.selectExtractionsListByIds( _plugin, listIds );
     }
-    
+
     /**
      * Load the data of all the extraction objects and returns them as a list
      * @return the list which contains the data of all the extraction objects
@@ -149,7 +149,16 @@ public final class ExportAttributeHome
     {
         return _dao.selectExtractionsListByIdProfil( _plugin, nIdProfil );
     }
-    
+
+    /**
+     * Load the id of all the extraction objects and returns them as a list
+     * @return the list which contains the id of all the extraction objects
+     */
+    public static List<Integer> getIdExportAttributeListByIdProfil( final int nIdProfil )
+    {
+        return _dao.selectIdExtractionsListByIdProfil( _plugin, nIdProfil );
+    }
+
     /**
      * Remove the extraction whose identifier is specified in parameter
      * @param nKey The extraction Id

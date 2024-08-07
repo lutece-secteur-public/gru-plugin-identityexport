@@ -113,7 +113,15 @@ public interface IExtractionDAO
      */
 	List<ExportAttribute> selectExtractionsListByIdProfil(Plugin plugin, int nIdProfil);
 
-	/**
+    /**
+     * Load the id of all the extraction objects and returns them as a list
+     * @param plugin the Plugin
+     * @param nIdProfil id profil
+     * @return The list which contains the id of all the extraction objects
+     */
+    List<Integer> selectIdExtractionsListByIdProfil( final Plugin plugin, final int nIdProfil );
+
+    /**
      * Delete a record from the table
      * @param nKey The identifier of the Extraction to delete
      * @param plugin the Plugin

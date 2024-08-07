@@ -1,5 +1,3 @@
-<#include "manageextraction_tabs.html" />
-<@tabs2 tab="extraction" />
 <@box>
 	<@boxHeader title='#i18n{identityexport.create_extraction.title}' />
 	<@boxBody>
@@ -12,11 +10,13 @@
 		<@formGroup labelFor='field' labelKey='#i18n{identityexport.modify_extraction.labelField}' mandatory=true>
 			<@select name='key' items=lstAttributes id='key' sort=true />
 		</@formGroup>
-		
-		<@formGroup labelFor='field' labelKey='#i18n{identityexport.modify_extraction.labelProfil}' mandatory=true>
-			<@select name='idProfil' items=lstProfils id='idProfil' sort=true />
-		</@formGroup>
-				
+
+        <@formGroup labelFor='field' labelKey='#i18n{identityexport.modify_extraction.labelProfil}' mandatory=true>
+            <@input type='hidden' id='idProfil' name='idProfil' value='${selectedProfilId}' />
+            <p>${selectedProfilName}</p>
+        </@formGroup>
+
+
 		<@actionButtons button1Name="action_createExtraction" button2Name="view_manageExtraction"/>
     </@tform>
 	</@boxBody>

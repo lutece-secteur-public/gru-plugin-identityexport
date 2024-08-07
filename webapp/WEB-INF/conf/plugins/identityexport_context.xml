@@ -30,6 +30,7 @@
     
     <bean id="referential.restTransport.httpAccess" class="fr.paris.lutece.plugins.identitystore.v3.web.rs.service.ReferentialTransportRest">
         <constructor-arg ref="identitystore.httpAccessTransport"/>
+        <constructor-arg value="${identityexport.identitystore.identityPath}"/>
     </bean>
     
     <bean id="defaultFileDownloadUrlService" class="fr.paris.lutece.portal.service.file.implementation.DefaultFileDownloadService" />

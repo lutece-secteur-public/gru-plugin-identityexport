@@ -1,9 +1,6 @@
-<#include "manageextraction_tabs.html" />
-<@tabs2 tab="profil" />
-
 <@messages errors=errors />
 <@box>
-	<@boxHeader title='#i18n{identityexport.manage_profil.title}' boxTools=true>
+	<@boxHeader title='#i18n{identityexport.manage_profils.title}' boxTools=true>
 		<@tform class='form-inline pull-right' name='manage_profil' action='jsp/admin/plugins/identityexport/ManageProfils.jsp'>
 			<@button type='submit' name='view_createProfil' buttonIcon='plus' title='#i18n{identityexport.manage_profils.buttonAdd}' />
 		</@tform>
@@ -50,8 +47,10 @@
 			</td>
         	<td>
 				<@aButton href='jsp/admin/plugins/identityexport/ManageProfils.jsp?view=modifyProfil&id=${profil.id}' title='#i18n{portal.util.labelModify}' hideTitle=['all'] buttonIcon='pencil' />
-						
-				<@aButton href='jsp/admin/plugins/identityexport/ManageProfils.jsp?action=confirmRemoveProfil&id=${profil.id}' title='#i18n{portal.util.labelDelete}' buttonIcon='trash' hideTitle=['all'] color='btn-danger'  />
+
+                <@aButton href='jsp/admin/plugins/identityexport/ManageExtractions.jsp?idProfil=${profil.id}' title='#i18n{identityexport.manage_extractions.pageTitle}' hideTitle=['all'] buttonIcon='list' />
+
+                <@aButton href='jsp/admin/plugins/identityexport/ManageProfils.jsp?action=confirmRemoveProfil&id=${profil.id}' title='#i18n{portal.util.labelDelete}' buttonIcon='trash' hideTitle=['all'] color='btn-danger'  />
 				
 				<@aButton href='jsp/admin/plugins/identityexport/ManageProfils.jsp?action=extractDataCSV&id=${profil.id}' title='#i18n{identityexport.manage_extractions.buttonExtract}' color='btn-danger'  />
 				

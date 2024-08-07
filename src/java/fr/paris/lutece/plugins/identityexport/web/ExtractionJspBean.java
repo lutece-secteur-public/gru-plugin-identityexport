@@ -69,6 +69,7 @@ import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.util.ReferenceList;
 import fr.paris.lutece.util.html.AbstractPaginator;
 import fr.paris.lutece.util.url.UrlItem;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * This class provides the user interface to manage Extraction features ( manage, create, modify, remove )
@@ -83,6 +84,7 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
 
     // Parameters
     private static final String PARAMETER_ID_EXTRACTION = "id";
+    private static final String PARAMETER_ID_PROFIL = "idProfil";
 
     // Properties for page titles
     private static final String PROPERTY_PAGE_TITLE_MANAGE_EXTRACTIONS = "identityexport.manage_extractions.pageTitle";
@@ -131,19 +133,20 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
      * @return The page
      */
     @View( value = VIEW_MANAGE_EXTRACTIONS, defaultView = true )
-    public String getManageExtractions( HttpServletRequest request )
+    public String getManageExtractions( final HttpServletRequest request )
     {
         _extraction = null;
-        
+        final int idProfil = Integer.parseInt(request.getParameter(PARAMETER_ID_PROFIL));
         if ( request.getParameter( AbstractPaginator.PARAMETER_PAGE_INDEX) == null || _listIdExtractions.isEmpty( ) )
         {
-        	_listIdExtractions = ExportAttributeHome.getIdExportAttributeList(  );
+            _listIdExtractions = ExportAttributeHome.getIdExportAttributeListByIdProfil(idProfil);
         }
         
-        ReferenceList profilsReferenceList = ProfileHome.getProfilsReferenceList();
+        final ReferenceList profilsReferenceList = ProfileHome.getProfilsReferenceList();
         
-        Map<String, Object> model = getPaginatedListModel( request, MARK_EXTRACTION_LIST, _listIdExtractions, JSP_MANAGE_EXTRACTIONS );
-        model.put("lstProfils", profilsReferenceList.toMap( ) );
+        final Map<String, Object> model = getPaginatedListModel( request, MARK_EXTRACTION_LIST, _listIdExtractions, JSP_MANAGE_EXTRACTIONS );
+        model.put("profilName", ProfileHome.findByPrimaryKey(idProfil).orElseThrow(() -> new AppException( ERROR_RESOURCE_NOT_FOUND )).getName() );
+        model.put("idProfil", idProfil);
 
         return getPage( PROPERTY_PAGE_TITLE_MANAGE_EXTRACTIONS, TEMPLATE_MANAGE_EXTRACTIONS, model );
     }
@@ -218,7 +221,9 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         model.put( MARK_EXTRACTION, _extraction );
         model.put( "lstAttributes" , lstAttributes);
         model.put( "lstCertif" , lstCertifLevel);
-        model.put( "lstProfils", lstProfils);
+        final int idProfil = Integer.parseInt(request.getParameter(PARAMETER_ID_PROFIL));
+        model.put( "selectedProfilId", idProfil);
+        model.put( "selectedProfilName", ProfileHome.findByPrimaryKey(idProfil).orElseThrow(() -> new AppException( ERROR_RESOURCE_NOT_FOUND )).getName());
         model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_CREATE_EXTRACTION ) );
 
         return getPage( PROPERTY_PAGE_TITLE_CREATE_EXTRACTION, TEMPLATE_CREATE_EXTRACTION, model );
@@ -252,7 +257,7 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         addInfo( INFO_EXTRACTION_CREATED, getLocale(  ) );
         resetListId( );
 
-        return redirectView( request, VIEW_MANAGE_EXTRACTIONS );
+        return redirect(request, VIEW_MANAGE_EXTRACTIONS, PARAMETER_ID_PROFIL, _extraction.getIdProfil());
     }
 
     /**
@@ -265,9 +270,11 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
     @Action( ACTION_CONFIRM_REMOVE_EXTRACTION )
     public String getConfirmRemoveExtraction( HttpServletRequest request )
     {
-        int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
+        final int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
+        final int nIdProfil = Integer.parseInt( request.getParameter( PARAMETER_ID_PROFIL ) );
         UrlItem url = new UrlItem( getActionUrl( ACTION_REMOVE_EXTRACTION ) );
         url.addParameter( PARAMETER_ID_EXTRACTION, nId );
+        url.addParameter( PARAMETER_ID_PROFIL, nIdProfil );
 
         String strMessageUrl = AdminMessageService.getMessageUrl( request, MESSAGE_CONFIRM_REMOVE_EXTRACTION, url.getUrl(  ), AdminMessage.TYPE_CONFIRMATION );
 
@@ -283,14 +290,14 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
     @Action( ACTION_REMOVE_EXTRACTION )
     public String doRemoveExtraction( HttpServletRequest request )
     {
-        int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
-        
-        
+        final int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
+        final int nIdProfil = Integer.parseInt( request.getParameter( PARAMETER_ID_PROFIL ) );
+
         ExportAttributeHome.remove( nId );
         addInfo( INFO_EXTRACTION_REMOVED, getLocale(  ) );
         resetListId( );
 
-        return redirectView( request, VIEW_MANAGE_EXTRACTIONS );
+        return redirect( request, VIEW_MANAGE_EXTRACTIONS, PARAMETER_ID_PROFIL, nIdProfil );
     }
 
     /**
@@ -302,7 +309,7 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
     @View( VIEW_MODIFY_EXTRACTION )
     public String getModifyExtraction( HttpServletRequest request )
     {
-        int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
+        final int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
 
         if ( _extraction == null || ( _extraction.getId(  ) != nId ) )
         {
@@ -313,7 +320,6 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         ReferentialService ref = SpringContextService.getBean( "referential.identityService" );
         ReferenceList lstAttributes = new ReferenceList();
         ReferenceList lstCertifLevel = new ReferenceList(); 
-        ReferenceList lstProfils = ProfileHome.getProfilsReferenceList( );
     	try {
     		
     		RequestAuthor author = new RequestAuthor( );
@@ -343,7 +349,8 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         model.put( MARK_EXTRACTION, _extraction );
         model.put( "lstAttributes" , lstAttributes);
         model.put( "lstCertif" , lstCertifLevel);
-        model.put( "lstProfils", lstProfils);
+        model.put( "selectedProfilName", ProfileHome.findByPrimaryKey(_extraction.getIdProfil()).orElseThrow(() -> new AppException( ERROR_RESOURCE_NOT_FOUND )).getName());
+
         model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_MODIFY_EXTRACTION ) );
 
         return getPage( PROPERTY_PAGE_TITLE_MODIFY_EXTRACTION, TEMPLATE_MODIFY_EXTRACTION, model );
@@ -377,7 +384,7 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         addInfo( INFO_EXTRACTION_UPDATED, getLocale(  ) );
         resetListId( );
 
-        return redirectView( request, VIEW_MANAGE_EXTRACTIONS );
+        return redirect( request, VIEW_MANAGE_EXTRACTIONS, PARAMETER_ID_PROFIL, _extraction.getIdProfil() );
     }
    
 }
