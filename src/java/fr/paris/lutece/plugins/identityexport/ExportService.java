@@ -31,6 +31,7 @@ import fr.paris.lutece.plugins.identitystore.v3.web.service.ReferentialService;
 import fr.paris.lutece.plugins.identitystore.web.exception.IdentityStoreException;
 import fr.paris.lutece.portal.business.file.File;
 import fr.paris.lutece.portal.service.file.FileService;
+import fr.paris.lutece.portal.service.file.FileServiceException;
 import fr.paris.lutece.portal.service.file.IFileStoreServiceProvider;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppLogService;
@@ -146,12 +147,18 @@ public class ExportService {
 		File zipFile = genProfile.finalizeAndGenerateZipFile( );
 
 		// store result in FileService
-		_fileStoreService.storeFile( zipFile );
+		try
+		{
+			_fileStoreService.storeFile( zipFile );
+		} 
+		catch (FileServiceException e)
+		{
+			AppLogService.error( "Export error : " + e.getMessage( ) );
+			return "ERROR during export of id profile : " + nIdProfile + " : " + e.getMessage( );
+		}
+		
 		AppLogService.debug( "fichier cree : " + genProfile.getName( ) );
-
-
 		lstFields = new ArrayList<>();
-
 
 		return "Export of id profile : " + nIdProfile + " done." ;
 
