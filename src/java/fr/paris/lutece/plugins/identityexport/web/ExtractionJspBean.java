@@ -44,10 +44,12 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
+import fr.paris.lutece.api.user.User;
 import fr.paris.lutece.plugins.identityexport.business.ExportAttribute;
 import fr.paris.lutece.plugins.identityexport.business.ExportAttributeHome;
 import fr.paris.lutece.plugins.identityexport.business.ProfileHome;
 import fr.paris.lutece.plugins.identityexport.export.Constants;
+import fr.paris.lutece.plugins.identityexport.rbac.AccessExportProfileResource;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.common.AttributeKeyDto;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.common.AuthorType;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.common.RequestAuthor;
@@ -59,6 +61,7 @@ import fr.paris.lutece.plugins.identitystore.web.exception.IdentityStoreExceptio
 import fr.paris.lutece.portal.service.admin.AccessDeniedException;
 import fr.paris.lutece.portal.service.message.AdminMessage;
 import fr.paris.lutece.portal.service.message.AdminMessageService;
+import fr.paris.lutece.portal.service.rbac.RBACService;
 import fr.paris.lutece.portal.service.security.SecurityTokenService;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppException;
@@ -133,10 +136,14 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
      * @return The page
      */
     @View( value = VIEW_MANAGE_EXTRACTIONS, defaultView = true )
-    public String getManageExtractions( final HttpServletRequest request )
+    public String getManageExtractions( final HttpServletRequest request ) throws AccessDeniedException
     {
         _extraction = null;
         final int idProfil = Integer.parseInt(request.getParameter(PARAMETER_ID_PROFIL));
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(idProfil), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
+        }
+
         if ( request.getParameter( AbstractPaginator.PARAMETER_PAGE_INDEX) == null || _listIdExtractions.isEmpty( ) )
         {
             _listIdExtractions = ExportAttributeHome.getIdExportAttributeListByIdProfil(idProfil);

@@ -72,13 +72,11 @@
     -->    
     
     <!-- RBAC Resources -->
-    <!--
     <rbac-resource-types>
         <rbac-resource-type>
-            <rbac-resource-type-class>...</rbac-resource-type-class>
+            <rbac-resource-type-class>fr.paris.lutece.plugins.identityexport.rbac.AccessExportProfileResourceIdService</rbac-resource-type-class>
         </rbac-resource-type>
     </rbac-resource-types>
-    -->
 
     <!-- Admin Dashboard components -->
     <!-- 

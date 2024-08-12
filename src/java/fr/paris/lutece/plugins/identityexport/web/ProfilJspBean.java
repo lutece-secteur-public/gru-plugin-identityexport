@@ -35,31 +35,14 @@
  
 package fr.paris.lutece.plugins.identityexport.web;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-
-import fr.paris.lutece.plugins.identityexport.business.ElasticsearchResponseJSON;
-import fr.paris.lutece.plugins.identityexport.business.ElasticsearchResponseJSON.Hit;
-import fr.paris.lutece.plugins.identityexport.business.ExportAttribute;
+import fr.paris.lutece.api.user.User;
 import fr.paris.lutece.plugins.identityexport.business.ExportAttributeHome;
 import fr.paris.lutece.plugins.identityexport.business.ExportRequest;
 import fr.paris.lutece.plugins.identityexport.business.ExtractRequestHome;
 import fr.paris.lutece.plugins.identityexport.business.Profile;
 import fr.paris.lutece.plugins.identityexport.business.ProfileHome;
 import fr.paris.lutece.plugins.identityexport.export.Constants;
+import fr.paris.lutece.plugins.identityexport.rbac.AccessExportProfileResource;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.common.AuthorType;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.common.RequestAuthor;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.referentiel.AttributeCertificationLevelDto;
@@ -67,15 +50,18 @@ import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.referentiel.Attribute
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.referentiel.ProcessusSearchResponse;
 import fr.paris.lutece.plugins.identitystore.v3.web.service.ReferentialService;
 import fr.paris.lutece.plugins.identitystore.web.exception.IdentityStoreException;
+import fr.paris.lutece.portal.business.rbac.RBAC;
+import fr.paris.lutece.portal.business.rbac.RBACHome;
+import fr.paris.lutece.portal.business.user.AdminUserHome;
 import fr.paris.lutece.portal.service.admin.AccessDeniedException;
 import fr.paris.lutece.portal.service.file.FileService;
 import fr.paris.lutece.portal.service.file.IFileStoreServiceProvider;
 import fr.paris.lutece.portal.service.message.AdminMessage;
 import fr.paris.lutece.portal.service.message.AdminMessageService;
+import fr.paris.lutece.portal.service.rbac.RBACService;
 import fr.paris.lutece.portal.service.security.SecurityTokenService;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppException;
-import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import fr.paris.lutece.portal.util.mvc.admin.annotations.Controller;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.Action;
@@ -83,6 +69,19 @@ import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.util.ReferenceList;
 import fr.paris.lutece.util.html.AbstractPaginator;
 import fr.paris.lutece.util.url.UrlItem;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This class provides the user interface to manage Profil features ( manage, create, modify, remove )
@@ -150,21 +149,19 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
     public String getManageProfils( HttpServletRequest request )
     {
         _profil = null;
-        
         if ( request.getParameter( AbstractPaginator.PARAMETER_PAGE_INDEX) == null || _listIdProfils.isEmpty( ) )
         {
-        	_listIdProfils = ProfileHome.getIdProfilsList(  );
+            _listIdProfils = ProfileHome.getIdProfilsList( ).stream()
+                                        .filter(id -> RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(id), AccessExportProfileResource.PERMISSION_READ, (User) getUser()))
+                                        .collect(Collectors.toList());
         }
        
-        IFileStoreServiceProvider fileStoreService = FileService.getInstance().getFileStoreServiceProvider("localFileSystemDirectoryFileService");
-        List<Profile> lstProfils = ProfileHome.getProfilsList( );
-        Map<String, String> mapLinkBO = new HashMap<String, String>();
-        for ( Profile pro : lstProfils )
-        {
-        	mapLinkBO.put( String.valueOf( pro.getId() ), fileStoreService.getFileDownloadUrlBO( pro.getFileName() + ".zip" ) );
-        }
-        
-        
+        final IFileStoreServiceProvider fileStoreService = FileService.getInstance().getFileStoreServiceProvider("localFileSystemDirectoryFileService");
+        final Map<String, String> mapLinkBO = new HashMap<String, String>();
+        ProfileHome.getProfilsList().stream()
+                   .filter(profile -> _listIdProfils.contains(profile.getId()))
+                   .forEach(profile -> mapLinkBO.put( String.valueOf( profile.getId() ), fileStoreService.getFileDownloadUrlBO( profile.getFileName() + ".zip" ) ));
+
         Map<String, Object> model = getPaginatedListModel( request, MARK_PROFIL_LIST, _listIdProfils, JSP_MANAGE_PROFILS );
         model.put( MARK_LST_PROFIL_DAEMON, ExtractRequestHome.getIdExportRequestList() );
         model.put( MARK_FILE_LINK_URL, mapLinkBO );
@@ -205,8 +202,8 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
     @View( VIEW_CREATE_PROFIL )
     public String getCreateProfil( HttpServletRequest request )
     {
+
         _profil = ( _profil != null ) ? _profil : new Profile(  );
-        
         ReferentialService ref = SpringContextService.getBean( "referential.identityService" );
         ReferenceList lstCertifLevel = new ReferenceList(); 
     	try {
@@ -252,7 +249,6 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
     public String doCreateProfil( HttpServletRequest request ) throws AccessDeniedException
     {
         populate( _profil, request, getLocale( ) );
-        
 
         if ( !SecurityTokenService.getInstance( ).validate( request, ACTION_CREATE_PROFIL ) )
         {
@@ -269,6 +265,29 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
         addInfo( INFO_PROFIL_CREATED, getLocale(  ) );
         resetListId( );
 
+        final List<String> permissions = List.of(AccessExportProfileResource.PERMISSION_READ, AccessExportProfileResource.PERMISSION_WRITE);
+        final Set<String> userRoles = AdminUserHome.getRolesListForUser(getUser().getUserId()).keySet();
+        final Collection<String> rolesWithCreatePermission =
+                RBACHome.findRoleKeys(AccessExportProfileResource.RESOURCE_TYPE, RBAC.WILDCARD_RESOURCES_ID, AccessExportProfileResource.PERMISSION_CREATE);
+        // Iterate over user roles that have the CREATE permission
+        userRoles.stream().filter(rolesWithCreatePermission::contains).forEach(userRole -> {
+            // Get role's RBAC for READ and WRITE permissions
+            final Collection<RBAC> roleRbacs = RBACHome.findByPermissionsAndRoles(permissions, List.of(userRole)).stream()
+                                                       .filter(rbac -> rbac.getResourceTypeKey().equals(AccessExportProfileResource.RESOURCE_TYPE))
+                                                       .collect(Collectors.toList());
+            permissions.forEach(permission -> {
+                // If the role doesn't have the full ressource permission, we add one for the new profile the user just created
+                if (roleRbacs.stream().noneMatch(rbac -> rbac.getResourceId().equals(RBAC.WILDCARD_RESOURCES_ID) && List.of(permission, RBAC.WILDCARD_PERMISSIONS_KEY).contains(rbac.getPermissionKey()))) {
+                    final RBAC rbac = new RBAC();
+                    rbac.setPermissionKey(permission);
+                    rbac.setResourceId(String.valueOf(_profil.getId()));
+                    rbac.setResourceTypeKey(AccessExportProfileResource.RESOURCE_TYPE);
+                    rbac.setRoleKey(userRole);
+                    RBACHome.create( rbac );
+                }
+            });
+        });
+
         return redirectView( request, VIEW_MANAGE_PROFILS );
     }
 
@@ -280,9 +299,13 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
      * @return the html code to confirm
      */
     @Action( ACTION_CONFIRM_REMOVE_PROFIL )
-    public String getConfirmRemoveProfil( HttpServletRequest request )
+    public String getConfirmRemoveProfil( HttpServletRequest request ) throws AccessDeniedException
     {
         int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_PROFIL ) );
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(nId), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
+        }
+
         UrlItem url = new UrlItem( getActionUrl( ACTION_REMOVE_PROFIL ) );
         url.addParameter( PARAMETER_ID_PROFIL, nId );
 
@@ -318,14 +341,15 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
      * @return The HTML form to update info
      */
     @View( VIEW_MODIFY_PROFIL )
-    public String getModifyProfil( HttpServletRequest request )
-    {
+    public String getModifyProfil( HttpServletRequest request ) throws AccessDeniedException {
         int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_PROFIL ) );
-
         if ( _profil == null || ( _profil.getId(  ) != nId ) )
         {
             Optional<Profile> optProfil = ProfileHome.findByPrimaryKey( nId );
             _profil = optProfil.orElseThrow( ( ) -> new AppException(ERROR_RESOURCE_NOT_FOUND ) );
+        }
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(nId), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
         }
 
         ReferentialService ref = SpringContextService.getBean( "referential.identityService" );
@@ -366,10 +390,12 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
      */
     @Action( ACTION_MODIFY_PROFIL )
     public String doModifyProfil( HttpServletRequest request ) throws AccessDeniedException
-    {   
+    {
         populate( _profil, request, getLocale( ) );
-		
-		
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(_profil.getId()), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
+        }
+
         if ( !SecurityTokenService.getInstance( ).validate( request, ACTION_MODIFY_PROFIL ) )
         {
             throw new AccessDeniedException ( "Invalid security token" );
