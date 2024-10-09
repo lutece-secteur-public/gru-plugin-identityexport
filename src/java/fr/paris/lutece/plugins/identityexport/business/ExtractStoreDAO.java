@@ -49,12 +49,12 @@ import java.util.Optional;
 public final class ExtractStoreDAO implements IExtractStoreDAO {
 	// Constants
 	private static final String SQL_QUERY_SELECT = "SELECT id_profile FROM identityexport_daemon_stack WHERE id_profile = ?";
-	private static final String SQL_QUERY_INSERT = "INSERT INTO identityexport_daemon_stack ( id_profile ) VALUES ( ? ) ";
+	private static final String SQL_QUERY_INSERT = "INSERT INTO identityexport_daemon_stack ( id_profile, recipient_email ) VALUES ( ?, ? ) ";
 	private static final String SQL_QUERY_DELETE = "DELETE FROM identityexport_daemon_stack WHERE id_profile = ? ";
-	private static final String SQL_QUERY_UPDATE = "UPDATE identityexport_daemon_stack SET id_profile = ? WHERE id_profile = ?";
-	private static final String SQL_QUERY_SELECTALL = "SELECT id_profile FROM identityexport_daemon_stack";
+	private static final String SQL_QUERY_UPDATE = "UPDATE identityexport_daemon_stack SET id_profile = ?, recipient_email = ? WHERE id_profile = ?";
+	private static final String SQL_QUERY_SELECTALL = "SELECT id_profile, recipient_email FROM identityexport_daemon_stack";
 	private static final String SQL_QUERY_SELECTALL_ID = "SELECT id_profile FROM identityexport_daemon_stack";
-	private static final String SQL_QUERY_SELECTALL_BY_IDS = "SELECT id_profile FROM identityexport_daemon_stack WHERE id_profile IN (  ";
+	private static final String SQL_QUERY_SELECTALL_BY_IDS = "SELECT id_profile, recipient_email FROM identityexport_daemon_stack WHERE id_profile IN (  ";
 
 	/**
 	 * {@inheritDoc }
@@ -64,6 +64,7 @@ public final class ExtractStoreDAO implements IExtractStoreDAO {
 		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_INSERT, Statement.RETURN_GENERATED_KEYS, plugin)) {
 			int nIndex = 1;
 			daoUtil.setInt(nIndex++, extractDaemon.getIdProfil());
+			daoUtil.setString(nIndex, extractDaemon.getRecipientEmail( ));
 
 			daoUtil.executeUpdate( );
 
@@ -111,7 +112,9 @@ public final class ExtractStoreDAO implements IExtractStoreDAO {
 		try (DAOUtil daoUtil = new DAOUtil(SQL_QUERY_UPDATE, plugin)) {
 			int nIndex = 1;
 
-			daoUtil.setInt(nIndex, extractDaemon.getIdProfil());
+			daoUtil.setInt(nIndex++, extractDaemon.getIdProfil());
+			daoUtil.setString(nIndex, extractDaemon.getRecipientEmail( ));
+
 
 			daoUtil.executeUpdate();
 		}
@@ -130,7 +133,8 @@ public final class ExtractStoreDAO implements IExtractStoreDAO {
 				ExportRequest extractDaemon = new ExportRequest();
 				int nIndex = 1;
 
-				extractDaemon.setIdProfil(daoUtil.getInt(nIndex));
+				extractDaemon.setIdProfil(daoUtil.getInt(nIndex++));
+				extractDaemon.setRecipientEmail(daoUtil.getString(nIndex));
 
 				extractDaemonList.add(extractDaemon);
 			}
@@ -201,7 +205,8 @@ public final class ExtractStoreDAO implements IExtractStoreDAO {
 					ExportRequest extractDaemon = new ExportRequest();
 					int nIndex = 1;
 
-					extractDaemon.setIdProfil(daoUtil.getInt(nIndex));
+					extractDaemon.setIdProfil(daoUtil.getInt(nIndex++));
+					extractDaemon.setRecipientEmail(daoUtil.getString(nIndex));
 
 					extractDaemonList.add(extractDaemon);
 				}

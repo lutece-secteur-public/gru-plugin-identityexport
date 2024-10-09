@@ -14,10 +14,10 @@ import java.util.Locale;
 public class AccessExportProfileResourceIdService extends ResourceIdService {
 
     private static final String PLUGIN_NAME = "identityexport";
-    private static final String PROPERTY_LABEL_RESOURCE_TYPE = "identityexport.rbac.access.export.profile.label";
-    private static final String PROPERTY_LABEL_READ = "identityexport.rbac.access.export.profile.permission.read";
-    private static final String PROPERTY_LABEL_WRITE = "identityexport.rbac.access.export.profile.permission.write";
-    private static final String PROPERTY_LABEL_CREATE = "identityexport.rbac.access.export.profile.permission.create";
+    private static final String PROPERTY_LABEL_RESOURCE_TYPE = "identityexport.rbac.access.export.model.label";
+    private static final String PROPERTY_LABEL_READ = "identityexport.rbac.access.export.model.permission.read";
+    private static final String PROPERTY_LABEL_WRITE = "identityexport.rbac.access.export.model.permission.write";
+    private static final String PROPERTY_LABEL_CREATE = "identityexport.rbac.access.export.model.permission.create";
 
     @Override
     public void register() {

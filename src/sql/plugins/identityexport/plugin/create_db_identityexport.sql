@@ -6,7 +6,9 @@ CREATE TABLE identityexport_profile (
     file_name varchar(255) default '',
     is_monparis SMALLINT,
     is_auto_extract SMALLINT,
+    auto_extract_interval int,
     password varchar(255) default '',
+    last_extract_date timestamp,
 PRIMARY KEY (id_profile)
 );
 
@@ -21,7 +23,8 @@ PRIMARY KEY (id_profile_attributes)
 DROP TABLE IF EXISTS identityexport_daemon_stack ;
 DROP TABLE IF EXISTS identityexport_daemon_stack;
 CREATE TABLE identityexport_daemon_stack (
-id_profile int,
-date_create timestamp,
+    id_profile int,
+    date_create timestamp,
+    recipient_email varchar(255),
 PRIMARY KEY (id_profile)
 );

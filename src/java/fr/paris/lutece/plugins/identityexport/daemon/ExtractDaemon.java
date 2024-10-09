@@ -6,7 +6,9 @@ import fr.paris.lutece.plugins.identityexport.ExportService;
 import fr.paris.lutece.plugins.identityexport.business.ExportRequest;
 import fr.paris.lutece.plugins.identityexport.business.ExtractRequestHome;
 import fr.paris.lutece.portal.service.daemon.Daemon;
+import fr.paris.lutece.portal.service.mail.MailService;
 import fr.paris.lutece.portal.service.util.AppLogService;
+import org.apache.commons.lang3.StringUtils;
 
 public class ExtractDaemon extends Daemon {
 	
@@ -29,7 +31,7 @@ public class ExtractDaemon extends Daemon {
 			{		
 				try 
 				{
-					ExportService.generateExport( extra.getIdProfil( ) );
+					ExportService.generateExport( extra.getIdProfil( ), extra.getRecipientEmail( ) );
 					sb.append( "Export generated of profile id : " + extra.getIdProfil( ) + "\n");
 				}
 				catch (Exception e)

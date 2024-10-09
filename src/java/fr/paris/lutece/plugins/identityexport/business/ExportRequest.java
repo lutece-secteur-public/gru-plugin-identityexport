@@ -43,6 +43,7 @@ public class ExportRequest implements Serializable
 
     private String _strToken;    
     private int _nIdProfil;
+    private String _strRecipientEmail;
 
     /**
      * Returns the Token
@@ -79,5 +80,20 @@ public class ExportRequest implements Serializable
     {
         _nIdProfil = nIdProfil;
     }
-    
+
+    /**
+     * get recipient email
+     * @return recipient email
+     */
+    public String getRecipientEmail() {
+        return _strRecipientEmail;
+    }
+
+    /**
+     * set recipient email
+     * @param recipientEmail the recipient email
+     */
+    public void setRecipientEmail(final String recipientEmail) {
+        this._strRecipientEmail = recipientEmail;
+    }
 }

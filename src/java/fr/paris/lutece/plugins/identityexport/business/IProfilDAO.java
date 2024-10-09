@@ -110,5 +110,5 @@ public interface IProfilDAO
      * @param plugin the Plugin
      * @return The list which contains the id of all the profil objects
      */
-	List<Integer> selectIdProfilsListAutoExtract(Plugin plugin);
+	List<Profile> selectProfilsListAutoExtract(Plugin plugin);
 }

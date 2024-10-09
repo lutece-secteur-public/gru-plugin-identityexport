@@ -17,4 +17,7 @@ public class Constants {
     
     public static final String LOCAL_FILESYSTEM_DIRECTORY = "localFileSystemDirectoryFileService";
 
+    public static final String API_PATH = "export";
+    public static final String SCHEDULE_PATH = "/schedule";
+
 }

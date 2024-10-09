@@ -145,9 +145,9 @@ public final class ProfileHome
      * Load the id of all the profil objects and returns them as a list
      * @return the list which contains the id of all the profil objects
      */
-    public static List<Integer> getIdProfilsListAutoExtract( )
+    public static List<Profile> getProfilsListAutoExtract( )
     {
-        return _dao.selectIdProfilsListAutoExtract( _plugin );
+        return _dao.selectProfilsListAutoExtract( _plugin );
     }
 
 }

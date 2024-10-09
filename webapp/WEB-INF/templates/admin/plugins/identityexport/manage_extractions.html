@@ -1,7 +1,7 @@
 <@box>
 	<@boxHeader title='#i18n{identityexport.manage_extractions.title}' boxTools=true>
 		<@tform class='form-inline pull-right' name='manage_extraction' action='jsp/admin/plugins/identityexport/ManageExtractions.jsp'>
-            <@aButton href="jsp/admin/plugins/identityexport/ManageProfils.jsp" buttonIcon='arrow-left' title='#i18n{identityexport.manage_extractions.backToProfils}' />
+            <@aButton href="jsp/admin/plugins/identityexport/ManageProfils.jsp" buttonIcon='arrow-left' title='#i18n{identityexport.manage_extractions.backToModels}' />
             <@input type="hidden" id="idProfil" name="idProfil" value="${idProfil}"/>
             <@button type='submit' name='view_createExtraction' buttonIcon='plus' title='#i18n{identityexport.manage_extractions.buttonAdd}' />
         </@tform>
@@ -13,7 +13,7 @@
     <@table>
         <tr>
             <th>#i18n{identityexport.manage_extractions.columnField}</th>
-            <th>#i18n{identityexport.manage_extractions.columnProfil}</th>
+            <th>#i18n{identityexport.manage_extractions.columnModel}</th>
             <th>#i18n{portal.util.labelActions}</th>
         </tr>
         <@tableHeadBodySeparator />

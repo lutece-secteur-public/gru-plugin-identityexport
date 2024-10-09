@@ -50,14 +50,33 @@ import java.util.Optional;
 public final class ProfilDAO implements IProfilDAO
 {
     // Constants
-    private static final String SQL_QUERY_SELECT = "SELECT id_profile, name, certifier_code, file_name, is_monparis, is_auto_extract, password FROM identityexport_profile WHERE id_profile = ?";
-    private static final String SQL_QUERY_INSERT = "INSERT INTO identityexport_profile ( name, certifier_code, file_name, is_monparis, is_auto_extract, password ) VALUES ( ?, ?, ?, ?, ?, ? ) ";
+    private static final String ALL_COLUMNS = "id_profile, name, certifier_code, file_name, is_monparis, is_auto_extract, auto_extract_interval, password";
+
+    private static final String SQL_QUERY_SELECT = "SELECT " + ALL_COLUMNS + " FROM identityexport_profile WHERE id_profile = ?";
+    private static final String SQL_QUERY_INSERT = "INSERT INTO identityexport_profile ( name, certifier_code, file_name, is_monparis, is_auto_extract, auto_extract_interval, password ) VALUES ( ?, ?, ?, ?, ?, ?, ? ) ";
     private static final String SQL_QUERY_DELETE = "DELETE FROM identityexport_profile WHERE id_profile = ? ";
-    private static final String SQL_QUERY_UPDATE = "UPDATE identityexport_profile SET name = ?, certifier_code = ?, file_name = ?, is_monparis = ?, is_auto_extract = ?, password = ? WHERE id_profile = ?";
-    private static final String SQL_QUERY_SELECTALL = "SELECT id_profile, name, certifier_code, file_name, is_monparis, is_auto_extract, password FROM identityexport_profile";
+    private static final String SQL_QUERY_UPDATE = "UPDATE identityexport_profile SET name = ?, certifier_code = ?, file_name = ?, is_monparis = ?, is_auto_extract = ?, auto_extract_interval = ?, password = ? WHERE id_profile = ?";
+    private static final String SQL_QUERY_SELECTALL = "SELECT " + ALL_COLUMNS + " FROM identityexport_profile";
     private static final String SQL_QUERY_SELECTALL_ID = "SELECT id_profile FROM identityexport_profile";
-    private static final String SQL_QUERY_SELECTALL_ID_AUTO_EXTRACT = "SELECT id_profile FROM identityexport_profile WHERE is_auto_extract = 1 ";
-    private static final String SQL_QUERY_SELECTALL_BY_IDS = "SELECT id_profile, name, certifier_code, file_name, is_monparis, is_auto_extract, password FROM identityexport_profile WHERE id_profile IN (  ";
+    private static final String SQL_QUERY_SELECTALL_AUTO_EXTRACT = "SELECT " + ALL_COLUMNS + " FROM identityexport_profile WHERE is_auto_extract = 1 ";
+    private static final String SQL_QUERY_SELECTALL_BY_IDS = "SELECT " + ALL_COLUMNS + " FROM identityexport_profile WHERE id_profile IN (  ";
+
+    private Profile load(final DAOUtil daoUtil) {
+        final Profile profil = new Profile();
+        int nIndex = 1;
+
+        profil.setId( daoUtil.getInt( nIndex++ ) );
+        profil.setName( daoUtil.getString( nIndex++ ) );
+        profil.setCertification( daoUtil.getString( nIndex++ ) );
+        profil.setFileName( daoUtil.getString( nIndex++ ) );
+        profil.setMonParis( daoUtil.getBoolean( nIndex++ ) );
+        profil.setAutoExtract( daoUtil.getBoolean( nIndex++ ) );
+        final int interval = daoUtil.getInt(nIndex++);
+        profil.setAutoExtractInterval( interval > 0 ? interval : null );
+        profil.setPassword( daoUtil.getString( nIndex ) );
+
+        return profil;
+    }
 
     /**
      * {@inheritDoc }
@@ -73,7 +92,12 @@ public final class ProfilDAO implements IProfilDAO
             daoUtil.setString( nIndex++ , profil.getFileName( ) );
             daoUtil.setBoolean( nIndex++, profil.isMonParis( ) );
             daoUtil.setBoolean( nIndex++, profil.isAutoExtract() );
-            daoUtil.setString( nIndex++ , profil.getPassword( ) );
+            if (profil.getAutoExtractInterval() == null) {
+                daoUtil.setIntNull(nIndex++);
+            } else {
+                daoUtil.setInt(nIndex++, profil.getAutoExtractInterval());
+            }
+            daoUtil.setString(nIndex, profil.getPassword());
             
             daoUtil.executeUpdate( );
             if ( daoUtil.nextGeneratedKey( ) ) 
@@ -94,23 +118,11 @@ public final class ProfilDAO implements IProfilDAO
         {
 	        daoUtil.setInt( 1 , nKey );
 	        daoUtil.executeQuery( );
-	        Profile profil = null;
-	
 	        if ( daoUtil.next( ) )
 	        {
-	            profil = new Profile();
-	            int nIndex = 1;
-	            
-	            profil.setId( daoUtil.getInt( nIndex++ ) );
-			    profil.setName( daoUtil.getString( nIndex++ ) );
-			    profil.setCertification( daoUtil.getString( nIndex++ ) );
-			    profil.setFileName( daoUtil.getString( nIndex++ ) );
-			    profil.setMonParis( daoUtil.getBoolean( nIndex++ ) );
-			    profil.setAutoExtract( daoUtil.getBoolean( nIndex++ ) );
-			    profil.setPassword( daoUtil.getString( nIndex++ ) );
+                return Optional.of( load( daoUtil ) );
 	        }
-	
-	        return Optional.ofNullable( profil );
+	        return Optional.empty();
         }
     }
 
@@ -137,12 +149,17 @@ public final class ProfilDAO implements IProfilDAO
         {
 	        int nIndex = 1;
 	        
-            	daoUtil.setString( nIndex++ , profil.getName( ) );
-            	daoUtil.setString( nIndex++ , profil.getCertification( ) );
-            	daoUtil.setString( nIndex++ , profil.getFileName( ) );
-            	daoUtil.setBoolean( nIndex++, profil.isMonParis( ) );
-            	daoUtil.setBoolean( nIndex++, profil.isAutoExtract() );
-                daoUtil.setString( nIndex++ , profil.getPassword( ) );
+            daoUtil.setString( nIndex++ , profil.getName( ) );
+            daoUtil.setString( nIndex++ , profil.getCertification( ) );
+            daoUtil.setString( nIndex++ , profil.getFileName( ) );
+            daoUtil.setBoolean( nIndex++, profil.isMonParis( ) );
+            daoUtil.setBoolean( nIndex++, profil.isAutoExtract() );
+            if (profil.getAutoExtractInterval() == null) {
+                daoUtil.setIntNull(nIndex++);
+            } else {
+                daoUtil.setInt(nIndex++, profil.getAutoExtractInterval());
+            }
+            daoUtil.setString( nIndex++ , profil.getPassword( ) );
 	        daoUtil.setInt( nIndex , profil.getId( ) );
 	
 	        daoUtil.executeUpdate( );
@@ -162,18 +179,7 @@ public final class ProfilDAO implements IProfilDAO
 	
 	        while ( daoUtil.next(  ) )
 	        {
-	            Profile profil = new Profile(  );
-	            int nIndex = 1;
-	            
-	            profil.setId( daoUtil.getInt( nIndex++ ) );
-			    profil.setName( daoUtil.getString( nIndex++ ) );
-			    profil.setCertification( daoUtil.getString( nIndex++ ) );
-			    profil.setFileName( daoUtil.getString( nIndex++ ) );
-			    profil.setMonParis( daoUtil.getBoolean( nIndex++ ) );
-			    profil.setAutoExtract( daoUtil.getBoolean( nIndex++ ) );
-			    profil.setPassword( daoUtil.getString( nIndex++ ) );
-	
-	            profilList.add( profil );
+	            profilList.add( load( daoUtil ) );
 	        }
 	
 	        return profilList;
@@ -249,18 +255,7 @@ public final class ProfilDAO implements IProfilDAO
 	        	daoUtil.executeQuery(  );
 	        	while ( daoUtil.next(  ) )
 		        {
-		        	Profile profil = new Profile(  );
-		            int nIndex = 1;
-		            
-		            profil.setId( daoUtil.getInt( nIndex++ ) );
-				    profil.setName( daoUtil.getString( nIndex++ ) );
-				    profil.setCertification( daoUtil.getString( nIndex++ ) );
-				    profil.setFileName( daoUtil.getString( nIndex++ ) );
-				    profil.setMonParis( daoUtil.getBoolean( nIndex++ ) );
-				    profil.setAutoExtract( daoUtil.getBoolean( nIndex++ ) );
-				    profil.setPassword( daoUtil.getString( nIndex++ ) );
-		            
-		            profilList.add( profil );
+		            profilList.add( load( daoUtil ) );
 		        }
 		
 		        daoUtil.free( );
@@ -275,16 +270,15 @@ public final class ProfilDAO implements IProfilDAO
      * {@inheritDoc }
      */
     @Override
-    public List<Integer> selectIdProfilsListAutoExtract( Plugin plugin )
+    public List<Profile> selectProfilsListAutoExtract( Plugin plugin )
     {
-        List<Integer> profilList = new ArrayList<>( );
-        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_SELECTALL_ID_AUTO_EXTRACT, plugin ) )
+        List<Profile> profilList = new ArrayList<>( );
+        try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_SELECTALL_AUTO_EXTRACT, plugin ) )
         {
 	        daoUtil.executeQuery(  );
-	
 	        while ( daoUtil.next(  ) )
 	        {
-	            profilList.add( daoUtil.getInt( 1 ) );
+	            profilList.add( load( daoUtil ) );
 	        }
 	
 	        return profilList;

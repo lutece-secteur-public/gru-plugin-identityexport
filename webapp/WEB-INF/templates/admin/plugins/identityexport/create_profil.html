@@ -16,13 +16,16 @@
 		<@formGroup labelFor='file_name' labelKey='#i18n{identityexport.modify_profil.labelFileName}' mandatory=true>
 			<@input type='text' id='file_name' name='file_name'  maxlength=255 value='${profil.fileName!\'\'}' />
 		</@formGroup>
-		<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelMonparis}' mandatory=true>
+		<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelConnectedIdentitiesOnly}' mandatory=true>
           	<@checkBox id="monParis" name="monParis"  value="1" checked=profil.monParis!'false' />
 		</@formGroup>
-		<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelAutoExtract}' mandatory=true>
+		<@formGroup labelFor='autoExtract' labelKey='#i18n{identityexport.modify_profil.labelAutoExtract}' mandatory=true>
           	<@checkBox id="autoExtract" name="autoExtract"  value="1" checked=profil.autoExtract!'false' />
 		</@formGroup>
-		<@formGroup labelFor='name' labelKey='#i18n{identityexport.modify_profil.labelPassword}' mandatory=true>
+		<@formGroup labelFor='interval' labelKey='#i18n{identityexport.modify_profil.labelAutoExtractInterval}' mandatory=false>
+			<@input type='number' id='interval' name='autoExtractInterval'  maxlength=255 value='${profil.autoExtractInterval!\'\'}' />
+		</@formGroup>
+		<@formGroup labelFor='password' labelKey='#i18n{identityexport.modify_profil.labelPassword}' mandatory=true>
 			<@input type='password' id='password' name='password'  maxlength=255 value='${profil.password!\'\'}' />
 			<@button name='copy' id='copy' title='#i18n{identityexport.modify_profil.labelGeneratePassword}' color='btn-danger' params='onclick="generateLocalPassword()"'  />
 		</@formGroup>

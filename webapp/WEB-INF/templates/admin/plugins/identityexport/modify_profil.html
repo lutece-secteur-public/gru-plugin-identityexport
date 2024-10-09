@@ -15,13 +15,16 @@
 			<@formGroup labelFor='file_name' labelKey='#i18n{identityexport.modify_profil.labelFileName}' mandatory=true>
 				<@input type='text' id='file_name' name='file_name'  maxlength=255 value='${profil.fileName!\'\'}' tabIndex='2' />
 			</@formGroup>
-			<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelMonparis}' mandatory=true>
+			<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelConnectedIdentitiesOnly}' mandatory=true>
 				<@checkBox id="monParis" name="monParis"  value="1" checked=profil.monParis!'false' tabIndex='3' />
 			</@formGroup>
-			<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelAutoExtract}' mandatory=true>
-          	<@checkBox id="autoExtract" name="autoExtract"  value="1" checked=profil.autoExtract!'false' />
+			<@formGroup labelFor='autoExtract' labelKey='#i18n{identityexport.modify_profil.labelAutoExtract}' mandatory=true>
+				<@checkBox id="autoExtract" name="autoExtract"  value="1" checked=profil.autoExtract!'false' />
 			</@formGroup>
-			<@formGroup labelFor='name' labelKey='#i18n{identityexport.modify_profil.labelPassword}' mandatory=true>
+			<@formGroup labelFor='interval' labelKey='#i18n{identityexport.modify_profil.labelAutoExtractInterval}' mandatory=false>
+				<@input type='number' id='interval' name='autoExtractInterval'  maxlength=255 value='${profil.autoExtractInterval!\'\'}' />
+			</@formGroup>
+			<@formGroup labelFor='password' labelKey='#i18n{identityexport.modify_profil.labelPassword}' mandatory=true>
 				<@input type='password' id='password' name='password'  maxlength=255 value='${profil.password!\'\'}' />
 			</@formGroup>
         <@actionButtons button1Name="action_modifyProfil" button2Name="view_manageProfil"/>

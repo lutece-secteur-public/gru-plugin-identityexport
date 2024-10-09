@@ -42,4 +42,8 @@
             <constructor-arg ref="defaultFileNoRBACService" />
             <property name="name" value="localFileSystemDirectoryFileService" />
     </bean>
+
+    <!-- REST -->
+    <bean id="identityexport.exportRest" class="fr.paris.lutece.plugins.identityexport.rs.ExportRest" />
+
 </beans>

@@ -36,6 +36,8 @@ package fr.paris.lutece.plugins.identityexport.business;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
+import java.sql.Timestamp;
+
 /**
  * This is the business class for the object Profil
  */ 
@@ -60,8 +62,12 @@ public class Profile implements Serializable
     private boolean _bMonParis;
     
     private boolean _bAutoExtract;
+
+    private Integer _nAutoExtractInterval;
     
     private String _strPassword;
+
+    private Timestamp _dateLastExtractDate;
 
     /**
      * Returns the Id
@@ -153,12 +159,27 @@ public class Profile implements Serializable
 		this._bAutoExtract = _bAutoExtract;
 	}
 
-	public String getPassword() {
+    public Integer getAutoExtractInterval() {
+        return _nAutoExtractInterval;
+    }
+
+    public void setAutoExtractInterval(final Integer autoExtractInterval) {
+        this._nAutoExtractInterval = autoExtractInterval;
+    }
+
+    public String getPassword() {
 		return _strPassword;
 	}
 
 	public void setPassword(String _strPassword) {
 		this._strPassword = _strPassword;
 	}
-    
+
+    public Timestamp getLastExtractDate() {
+        return _dateLastExtractDate;
+    }
+
+    public void setLastExtractDate(final Timestamp lastExtractDate) {
+        this._dateLastExtractDate = lastExtractDate;
+    }
 }

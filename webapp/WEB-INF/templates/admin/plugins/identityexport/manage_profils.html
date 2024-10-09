@@ -14,7 +14,7 @@
             <th>#i18n{identityexport.manage_profils.columnName}</th>
             <th>#i18n{identityexport.manage_profils.columnCertification}</th>
             <th>#i18n{identityexport.manage_profils.columnFileName}</th>
-            <th>#i18n{identityexport.manage_profils.columnMonparis}</th>
+            <th>#i18n{identityexport.manage_profils.columnConnectedIdentitiesOnly}</th>
             <th>#i18n{identityexport.manage_profils.columnAutoExtract}</th>
             <th>#i18n{identityexport.manage_profils.columnPassword}</th>
             <th>#i18n{identityexport.manage_profils.columnProgressBar}</th>
@@ -34,10 +34,21 @@
 				${profil.fileName}
 			</td>
 			<td>
-				${profil.monParis?c}
+				<#if profil.monParis>
+					<i class="fas fa-check" aria-hidden="true"></i>
+				<#else>
+					<i class="fas fa-times" aria-hidden="true"></i>
+				</#if>
 			</td>
 			<td>
-				${profil.autoExtract?c}
+				<#if profil.autoExtract>
+					<i class="fas fa-check" aria-hidden="true"></i>
+					<#if profil.autoExtractInterval??>
+						(${profil.autoExtractInterval}h)
+					</#if>
+				<#else>
+					<i class="fas fa-times" aria-hidden="true"></i>
+				</#if>
 			</td>
 			<td>
 				<@input type="password" id="password${profil.id}" name="password${profil.id}"  maxlength=255 value='${profil.password!\'\'}' params="disabled" />

@@ -1,6 +1,8 @@
 package fr.paris.lutece.plugins.identityexport;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import fr.paris.lutece.portal.service.mail.MailService;
+import fr.paris.lutece.util.mail.FileAttachment;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,39 +49,35 @@ public class ExportService {
 	/**
 	 * Process Export
 	 * 
-	 * @param nIdProfil
+	 * @param nIdProfile
 	 * @return message
 	 * @throws IOException 
 	 */
-	public static String generateExport( int nIdProfile ) throws IOException
+	public static String generateExport( final int nIdProfile, final String recipientEmail ) throws IOException
 	{
-		List<String> lstFields = new ArrayList<>( );
-		List<String> lstFieldsGuidCuid = new ArrayList<>();
-		List<String> lstCertifCodes = new ArrayList<>();
-		lstFieldsGuidCuid.add( Constants.CUID_ATTRIBUTE_KEY );
-		lstFieldsGuidCuid.add( Constants.GUID_ATTRIBUTE_KEY );
+		final List<String> lstFields = new ArrayList<>( );
+		final List<String> lstFieldsGuidCuid = List.of(Constants.CUID_ATTRIBUTE_KEY, Constants.GUID_ATTRIBUTE_KEY);
 
-		Optional<Profile> optProfile = ProfileHome.findByPrimaryKey( nIdProfile );
+		final Optional<Profile> optProfile = ProfileHome.findByPrimaryKey( nIdProfile );
 
-		List<ExportAttribute> lstAttributesByIdProfil = ExportAttributeHome.getExportAttributeListByIdProfil( nIdProfile );
+		final List<ExportAttribute> lstAttributesByIdProfil = ExportAttributeHome.getExportAttributeListByIdProfil( nIdProfile );
 		for ( ExportAttribute attr : lstAttributesByIdProfil )
 		{
 			lstFields.add( attr.getKey( ) );
 		}
 
-		if ( lstFields == null || lstFields.isEmpty( ) || optProfile.isEmpty( ) )
+		if ( lstFields.isEmpty( ) || optProfile.isEmpty( ) )
 		{
 			return "nothing to export";
 		}
 
-		ProfileGenerator genProfile = new ProfileGenerator ( optProfile.get( ) );
-
-		lstCertifCodes = getLstCertifCode( genProfile.getCertification( ) );
+		final Profile profile = optProfile.get();
+		final ProfileGenerator genProfile = new ProfileGenerator(profile);
+		final List<String> lstCertifCodes = getLstCertifCode( genProfile.getCertification( ) );
 
 		// get first result set of ELS
-		String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, optProfile.get().isMonParis( )  );
-
-		if ( resultElastic.isEmpty( ) )
+		final String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, optProfile.get().isMonParis( )  );
+		if ( resultElastic == null || resultElastic.isEmpty( ) )
 		{
 			return "nothing to export";
 		}
@@ -85,14 +85,13 @@ public class ExportService {
 		// write headers
 		genProfile.addContent( getHeaders( lstFieldsGuidCuid, lstFields ) ); 
 
-		ElasticsearchResponseJSON response = _mapper.readValue(resultElastic, ElasticsearchResponseJSON.class);
-
-		List<Hit> lstHits = response.getHits( ).getHits( );
+		final ElasticsearchResponseJSON response = _mapper.readValue(resultElastic, ElasticsearchResponseJSON.class);
+		final List<Hit> lstHits = response.getHits( ).getHits( );
 
 		String strSortId ="";
 		String[] strSortIdTab = new String[] {};
 		StringBuilder strContent = new StringBuilder( );
-		for ( Hit hit : lstHits)
+		for ( final Hit hit : lstHits )
 		{
 			// get one line
 			strContent.append( getLineFromHit( hit, lstFields ) );
@@ -110,7 +109,7 @@ public class ExportService {
 		//while ( strSortId != null && !strSortId.isEmpty() && strIdPit != null && !strIdPit.isEmpty())
 		while ( strSortId != null && !strSortId.isEmpty() )
 		{
-			String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, lstFields, lstCertifCodes, optProfile.get().isMonParis( ));
+			final String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, lstFields, lstCertifCodes, optProfile.get().isMonParis( ));
 
 			if ( resultElasticScroll.isEmpty( ) )
 			{
@@ -118,13 +117,13 @@ public class ExportService {
 				continue;
 			}
 
-			ElasticsearchResponseJSON responseElasticSearch = _mapper.readValue(resultElasticScroll, ElasticsearchResponseJSON.class);
+			final ElasticsearchResponseJSON responseElasticSearch = _mapper.readValue(resultElasticScroll, ElasticsearchResponseJSON.class);
 			//strIdPit = (String) responseElasticSearch.getPit_id();
 
 			if ( !responseElasticSearch.getHits( ).getHits( ).isEmpty( ) )
 			{
 				strContent = new StringBuilder( );
-				for ( Hit hit : responseElasticSearch.getHits( ).getHits( ) )
+				for ( final Hit hit : responseElasticSearch.getHits( ).getHits( ) )
 				{
 					strContent.append( getLineFromHit( hit, lstFields ) );
 
@@ -144,24 +143,33 @@ public class ExportService {
 		}
 
 		// finalize and  zip
-		File zipFile = genProfile.finalizeAndGenerateZipFile( );
+		final File zipFile = genProfile.finalizeAndGenerateZipFile( );
 
 		// store result in FileService
 		try
 		{
 			_fileStoreService.storeFile( zipFile );
 		} 
-		catch (FileServiceException e)
+		catch (final FileServiceException e)
 		{
 			AppLogService.error( "Export error : " + e.getMessage( ) );
 			return "ERROR during export of id profile : " + nIdProfile + " : " + e.getMessage( );
 		}
-		
+
+        if (StringUtils.isNotBlank(recipientEmail)) {
+            try {
+                final FileAttachment attachment = new FileAttachment(zipFile.getTitle(), zipFile.getPhysicalFile().getValue(), zipFile.getMimeType());
+                MailService.sendMailMultipartText(recipientEmail, "Lutèce - noreply", MailService.getNoReplyEmail(), "Export - " + profile.getName(), "", List.of(attachment));
+            } catch (final Exception e) {
+                AppLogService.error( "Export error : error while sending the email : " + e.getMessage( ) );
+            }
+        }
+
+		profile.setLastExtractDate(Timestamp.from(Instant.now()));
+		ProfileHome.update(profile);
+
 		AppLogService.debug( "fichier cree : " + genProfile.getName( ) );
-		lstFields = new ArrayList<>();
-
 		return "Export of id profile : " + nIdProfile + " done." ;
-
 	}
 
 	/**
