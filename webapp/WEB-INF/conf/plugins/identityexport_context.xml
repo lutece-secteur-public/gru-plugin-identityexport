@@ -46,4 +46,9 @@
     <!-- REST -->
     <bean id="identityexport.exportRest" class="fr.paris.lutece.plugins.identityexport.rs.ExportRest" />
 
+    <bean id="identityexport.uncaughtIdentityStoreExceptionMapper" class="fr.paris.lutece.plugins.identityexport.rs.error.UncaughtIdentityStoreExceptionMapper" />
+    <bean id="identityexport.uncaughtRequestFormatExceptionMapper" class="fr.paris.lutece.plugins.identityexport.rs.error.UncaughtRequestFormatExceptionMapper" />
+    <bean id="identityexport.uncaughtResourceNotFoundExceptionMapper" class="fr.paris.lutece.plugins.identityexport.rs.error.UncaughtResourceNotFoundExceptionMapper" />
+    <bean id="identityexport.uncaughtResourceConsistencyExceptionMapper" class="fr.paris.lutece.plugins.identityexport.rs.error.UncaughtResourceConsistencyExceptionMapper" />
+
 </beans>

@@ -3,7 +3,6 @@ package fr.paris.lutece.plugins.identityexport.rs;
 import fr.paris.lutece.plugins.identityexport.export.Constants;
 import fr.paris.lutece.plugins.identityexport.rs.request.ScheduleExportRequest;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.exporting.ExportModelScheduleRequest;
-import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.exporting.ExportModelScheduleResponse;
 import fr.paris.lutece.plugins.identitystore.web.exception.IdentityStoreException;
 import fr.paris.lutece.plugins.rest.service.RestConstants;
 
@@ -16,7 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path(RestConstants.BASE_PATH + Constants.API_PATH )
-public class ExportRest {
+public class ExportRest implements IRestService {
 
     public ExportRest() {
 
@@ -33,8 +32,7 @@ public class ExportRest {
             @HeaderParam( fr.paris.lutece.plugins.identitystore.v3.web.rs.util.Constants.PARAM_APPLICATION_CODE ) @DefaultValue( "" ) final String strHeaderAppCode )
             throws IdentityStoreException {
         final ScheduleExportRequest request = new ScheduleExportRequest(clientCode, authorName, authorType, exportModelScheduleRequest);
-        final ExportModelScheduleResponse response = (ExportModelScheduleResponse) request.doRequest();
-        return Response.status( response.getStatus( ).getHttpCode( ) ).entity( response ).type( MediaType.APPLICATION_JSON_TYPE ).build( );
+        return this.buildJsonResponse(request.doRequest());
     }
 
 }

@@ -10,7 +10,13 @@ import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.exporting.ExportModel
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.exporting.ExportModelScheduleResponse;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.util.Constants;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.util.ResponseStatusFactory;
+import fr.paris.lutece.plugins.identitystore.web.exception.ClientAuthorizationException;
+import fr.paris.lutece.plugins.identitystore.web.exception.DuplicatesConsistencyException;
 import fr.paris.lutece.plugins.identitystore.web.exception.IdentityStoreException;
+import fr.paris.lutece.plugins.identitystore.web.exception.RequestContentFormattingException;
+import fr.paris.lutece.plugins.identitystore.web.exception.RequestFormatException;
+import fr.paris.lutece.plugins.identitystore.web.exception.ResourceConsistencyException;
+import fr.paris.lutece.plugins.identitystore.web.exception.ResourceNotFoundException;
 
 public class ScheduleExportRequest extends AbstractIdentityStoreRequest {
 
@@ -24,12 +30,38 @@ public class ScheduleExportRequest extends AbstractIdentityStoreRequest {
     }
 
     @Override
-    protected void validateSpecificRequest() throws IdentityStoreException {
-        ExportRequestValidator.getInstance().validateScheduleExportRequest(request);
-        exportModel = ProfileHome.findByPrimaryKey(request.getExportModelId()).orElseThrow(() -> new IdentityStoreException("Export model not found"));
-        if (ExtractRequestHome.findByPrimaryKey(request.getExportModelId()).isPresent()) {
-            throw new IdentityStoreException("Extract already in progress on this export model");
+    protected void fetchResources() throws ResourceNotFoundException {
+        if (request != null && request.getExportModelId() != null) {
+            exportModel = ProfileHome.findByPrimaryKey(request.getExportModelId()).orElseThrow(
+                    () -> new ResourceNotFoundException("Export model not found", Constants.PROPERTY_REST_ERROR_RESOURCE_NOT_FOUND));
         }
+    }
+
+    @Override
+    protected void validateRequestFormat() throws RequestFormatException {
+        ExportRequestValidator.getInstance().validateScheduleExportRequest(request);
+    }
+
+    @Override
+    protected void validateClientAuthorization() throws ClientAuthorizationException {
+        // do nothing
+    }
+
+    @Override
+    protected void validateResourcesConsistency() throws ResourceConsistencyException {
+        if (ExtractRequestHome.findByPrimaryKey(request.getExportModelId()).isPresent()) {
+            throw new ResourceConsistencyException("Extract already in progress on this export model", Constants.PROPERTY_REST_ERROR_SCHEDULE_EXPORT_ALREADY_IN_PROGRESS);
+        }
+    }
+
+    @Override
+    protected void formatRequestContent() throws RequestContentFormattingException {
+        // do nothing
+    }
+
+    @Override
+    protected void checkDuplicatesConsistency() throws DuplicatesConsistencyException {
+        // do nothing
     }
 
     @Override
