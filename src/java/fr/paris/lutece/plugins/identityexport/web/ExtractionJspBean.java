@@ -140,8 +140,8 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
     {
         _extraction = null;
         final int idProfil = Integer.parseInt(request.getParameter(PARAMETER_ID_PROFIL));
-        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(idProfil), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
-            throw new AccessDeniedException("You don't have the right to modify this export profile.");
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(idProfil), AccessExportProfileResource.PERMISSION_READ, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to read this export profile.");
         }
 
         if ( request.getParameter( AbstractPaginator.PARAMETER_PAGE_INDEX) == null || _listIdExtractions.isEmpty( ) )
@@ -189,8 +189,13 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
      * @return the html code of the extraction form
      */
     @View( VIEW_CREATE_EXTRACTION )
-    public String getCreateExtraction( HttpServletRequest request )
+    public String getCreateExtraction( HttpServletRequest request ) throws AccessDeniedException
     {
+        final int idProfil = Integer.parseInt(request.getParameter(PARAMETER_ID_PROFIL));
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(idProfil), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
+        }
+
         _extraction = ( _extraction != null ) ? _extraction : new ExportAttribute(  );
         
         ReferentialService ref = SpringContextService.getBean( "referential.identityService" );
@@ -228,7 +233,6 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         model.put( MARK_EXTRACTION, _extraction );
         model.put( "lstAttributes" , lstAttributes);
         model.put( "lstCertif" , lstCertifLevel);
-        final int idProfil = Integer.parseInt(request.getParameter(PARAMETER_ID_PROFIL));
         model.put( "selectedProfilId", idProfil);
         model.put( "selectedProfilName", ProfileHome.findByPrimaryKey(idProfil).orElseThrow(() -> new AppException( ERROR_RESOURCE_NOT_FOUND )).getName());
         model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_CREATE_EXTRACTION ) );
@@ -247,7 +251,6 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
     public String doCreateExtraction( HttpServletRequest request ) throws AccessDeniedException
     {
         populate( _extraction, request, getLocale( ) );
-        
 
         if ( !SecurityTokenService.getInstance( ).validate( request, ACTION_CREATE_EXTRACTION ) )
         {
@@ -258,6 +261,9 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         if ( !validateBean( _extraction, VALIDATION_ATTRIBUTES_PREFIX ) )
         {
             return redirectView( request, VIEW_CREATE_EXTRACTION );
+        }
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(_extraction.getIdProfil()), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
         }
 
         ExportAttributeHome.create( _extraction );
@@ -275,10 +281,14 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
      * @return the html code to confirm
      */
     @Action( ACTION_CONFIRM_REMOVE_EXTRACTION )
-    public String getConfirmRemoveExtraction( HttpServletRequest request )
+    public String getConfirmRemoveExtraction( HttpServletRequest request ) throws AccessDeniedException
     {
         final int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
         final int nIdProfil = Integer.parseInt( request.getParameter( PARAMETER_ID_PROFIL ) );
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(nIdProfil), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
+        }
+
         UrlItem url = new UrlItem( getActionUrl( ACTION_REMOVE_EXTRACTION ) );
         url.addParameter( PARAMETER_ID_EXTRACTION, nId );
         url.addParameter( PARAMETER_ID_PROFIL, nIdProfil );
@@ -295,10 +305,13 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
      * @return the jsp URL to display the form to manage extractions
      */
     @Action( ACTION_REMOVE_EXTRACTION )
-    public String doRemoveExtraction( HttpServletRequest request )
+    public String doRemoveExtraction( HttpServletRequest request ) throws AccessDeniedException
     {
         final int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
         final int nIdProfil = Integer.parseInt( request.getParameter( PARAMETER_ID_PROFIL ) );
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(nIdProfil), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
+        }
 
         ExportAttributeHome.remove( nId );
         addInfo( INFO_EXTRACTION_REMOVED, getLocale(  ) );
@@ -314,7 +327,7 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
      * @return The HTML form to update info
      */
     @View( VIEW_MODIFY_EXTRACTION )
-    public String getModifyExtraction( HttpServletRequest request )
+    public String getModifyExtraction( HttpServletRequest request ) throws AccessDeniedException
     {
         final int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_EXTRACTION ) );
 
@@ -322,6 +335,9 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         {
             Optional<ExportAttribute> optExtraction = ExportAttributeHome.findByPrimaryKey( nId );
             _extraction = optExtraction.orElseThrow( ( ) -> new AppException(ERROR_RESOURCE_NOT_FOUND ) );
+        }
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(_extraction.getIdProfil()), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
         }
 
         ReferentialService ref = SpringContextService.getBean( "referential.identityService" );
@@ -385,6 +401,9 @@ public class ExtractionJspBean extends AbstractManageExtractionJspBean <Integer,
         if ( !validateBean( _extraction, VALIDATION_ATTRIBUTES_PREFIX ) )
         {
             return redirect( request, VIEW_MODIFY_EXTRACTION, PARAMETER_ID_EXTRACTION, _extraction.getId( ) );
+        }
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(_extraction.getIdProfil()), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
         }
 
         ExportAttributeHome.update( _extraction );

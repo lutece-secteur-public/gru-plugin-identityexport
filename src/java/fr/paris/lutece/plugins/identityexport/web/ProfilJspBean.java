@@ -107,6 +107,8 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
     private static final String MARK_PROFIL = "profil";
     private static final String MARK_LST_PROFIL_DAEMON = "lstIdProfil";
     private static final String MARK_FILE_LINK_URL = "urlFile";
+    private static final String MARK_PROFIL_CREATE_ACCESS = "profilCreateAccess";
+    private static final String MARK_PROFIL_WRITE_ACCESS_MAP = "profilWriteAccessMap";
 
     private static final String JSP_MANAGE_PROFILS = "jsp/admin/plugins/identityexport/ManageProfils.jsp";
 
@@ -155,7 +157,9 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
                                         .filter(id -> RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(id), AccessExportProfileResource.PERMISSION_READ, (User) getUser()))
                                         .collect(Collectors.toList());
         }
-       
+        final Map<String, Boolean> writeAccessByProfilId = new HashMap<>();
+        _listIdProfils.forEach( id -> writeAccessByProfilId.put( id.toString(), RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(id), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser()) ) );
+
         final IFileStoreServiceProvider fileStoreService = FileService.getInstance().getFileStoreServiceProvider("localFileSystemDirectoryFileService");
         final Map<String, String> mapLinkBO = new HashMap<String, String>();
         ProfileHome.getProfilsList().stream()
@@ -165,6 +169,8 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
         Map<String, Object> model = getPaginatedListModel( request, MARK_PROFIL_LIST, _listIdProfils, JSP_MANAGE_PROFILS );
         model.put( MARK_LST_PROFIL_DAEMON, ExtractRequestHome.getIdExportRequestList() );
         model.put( MARK_FILE_LINK_URL, mapLinkBO );
+        model.put( MARK_PROFIL_CREATE_ACCESS, RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, RBAC.WILDCARD_RESOURCES_ID, AccessExportProfileResource.PERMISSION_CREATE, (User) getUser()));
+        model.put( MARK_PROFIL_WRITE_ACCESS_MAP, writeAccessByProfilId );
 
         return getPage( PROPERTY_PAGE_TITLE_MANAGE_PROFILS, TEMPLATE_MANAGE_PROFILS, model );
     }
@@ -200,8 +206,11 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
      * @return the html code of the profil form
      */
     @View( VIEW_CREATE_PROFIL )
-    public String getCreateProfil( HttpServletRequest request )
+    public String getCreateProfil( HttpServletRequest request ) throws AccessDeniedException
     {
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, RBAC.WILDCARD_RESOURCES_ID, AccessExportProfileResource.PERMISSION_CREATE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to create a new export profile.");
+        }
 
         _profil = ( _profil != null ) ? _profil : new Profile(  );
         ReferentialService ref = SpringContextService.getBean( "referential.identityService" );
@@ -248,6 +257,9 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
     @Action( ACTION_CREATE_PROFIL )
     public String doCreateProfil( HttpServletRequest request ) throws AccessDeniedException
     {
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, RBAC.WILDCARD_RESOURCES_ID, AccessExportProfileResource.PERMISSION_CREATE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to create a new export profile.");
+        }
         populate( _profil, request, getLocale( ) );
 
         if ( !SecurityTokenService.getInstance( ).validate( request, ACTION_CREATE_PROFIL ) )
@@ -321,11 +333,12 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
      * @return the jsp URL to display the form to manage profils
      */
     @Action( ACTION_REMOVE_PROFIL )
-    public String doRemoveProfil( HttpServletRequest request )
-    {
+    public String doRemoveProfil( HttpServletRequest request ) throws AccessDeniedException {
         int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_PROFIL ) );
-        
-        
+        if (!RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, String.valueOf(nId), AccessExportProfileResource.PERMISSION_WRITE, (User) getUser())) {
+            throw new AccessDeniedException("You don't have the right to modify this export profile.");
+        }
+
         ProfileHome.remove( nId );
         ExportAttributeHome.removeFromProfil( nId );
         addInfo( INFO_PROFIL_REMOVED, getLocale(  ) );
