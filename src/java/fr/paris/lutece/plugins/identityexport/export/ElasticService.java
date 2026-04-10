@@ -9,15 +9,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import fr.paris.lutece.plugins.libraryelastic.util.ElasticConnexion;
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import fr.paris.lutece.util.httpaccess.HttpAccess;
 import fr.paris.lutece.util.httpaccess.HttpAccessException;
 
 public class ElasticService {
@@ -28,25 +23,25 @@ public class ElasticService {
 
 	/**
 	 * selectElasticField
-	 * 
+	 *
 	 * @param lstFields
 	 * @param lstCertifLevel
 	 * @param isMonParis
-	 * @param strIdPit
+	 * @param strPitId
 	 * @return
 	 */
-	public static String selectElasticField( List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis )
+	public static String selectElasticField( List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis, String strPitId )
 	{
 
 		StringJoiner joinerFields = new StringJoiner(",");
 		for ( String fieldRequest : lstFields )
-		{	
+		{
 			joinerFields.add("\"attributes." + fieldRequest + "\"");
 		}
 
 		StringJoiner joinerCertifCodes = new StringJoiner(",");
 		for ( String fieldCertifs : lstCertifLevel )
-		{	
+		{
 			joinerCertifCodes.add("\"" + fieldCertifs + "\"");
 		}
 
@@ -65,24 +60,24 @@ public class ElasticService {
 	    				+ "            ]\n"
 	    				+ "        }\n"
 	    				+ "    },"
-	    				//+ "\"pit\": {\n"
-	    				//+ "    \"id\":  \"" + strIdPit + "\", \n"
-	    				//+ "    \"keep_alive\": \"1m\"\n"
-	    				//+ "  },"
+	    				+ "\"pit\": {\n"
+	    				+ "    \"id\":  \"" + strPitId + "\", \n"
+	    				+ "    \"keep_alive\": \"1m\"\n"
+	    				+ "  },"
 	    				+ "  \"sort\": [ \n"
-	    				+ "    {\"customerId.keyword\": {\"order\": \"asc\"}}\n"
-	    				//+ "    ,{\"creationDate\": \"desc\"}\n"
-	    				+ "  ] "
+	    				+ "  {\"_shard_doc\": {\"order\": \"asc\"}}\n"
+	    				+ "  ],"
+	    				+ "  \"track_total_hits\": false "
 	    				+ "  }"
 	    				;
 
-		try 
+		try
 		{
 			AppLogService.debug("Request elastic : " + searchRequest);
 			return _elasticConnex.POST(AppPropertiesService.getProperty( Constants.PROPERTY_ELASTIC_PROVIDER_URL ) + "/_search" , searchRequest);
 
-		} 
-		catch (HttpAccessException e) 
+		}
+		catch (HttpAccessException e)
 		{
 			AppLogService.error(e.getMessage(), e);
 		}
@@ -93,26 +88,28 @@ public class ElasticService {
 
 	/**
 	 * selectElasticFieldSearchAfter
-	 * 
+	 *
 	 * @param strIdSort
-	 * @param strIdPit
+	 * @param lstFields
+	 * @param lstCertifLevel
+	 * @param isMonParis
+	 * @param strPitId
 	 * @return
 	 */
-	public static String selectElasticFieldSearchAfter( String[] strIdSort, List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis )
+	public static String selectElasticFieldSearchAfter( String[] strIdSort, List<String> lstFields, List<String> lstCertifLevel, boolean isMonParis, String strPitId )
 	{
 		StringJoiner joinerFields = new StringJoiner(",");
 		for ( String fieldRequest : lstFields )
-		{	
+		{
 			joinerFields.add("\"attributes." + fieldRequest + "\"");
 		}
 
 		StringJoiner joinerCertifCodes = new StringJoiner(",");
 		for ( String fieldCertifs : lstCertifLevel )
-		{	
+		{
 			joinerCertifCodes.add("\"" + fieldCertifs + "\"");
 		}
-		
-		
+
 		try {
 
 			String searchRequest = "{\"size\": 10000,"
@@ -130,21 +127,17 @@ public class ElasticService {
     				+ "            ]\n"
     				+ "        }\n"
     				+ "    },"
-					//+ "\"pit\": {\n"
-					//+ "    \"id\":  \"" + strIdPit + "\", \n"
-					//+ "    \"keep_alive\": \"1m\"\n"
-					//+ "  }," 
+					+ "\"pit\": {\n"
+					+ "    \"id\":  \"" + strPitId + "\", \n"
+					+ "    \"keep_alive\": \"1m\"\n"
+					+ "  },"
 					+ " \"search_after\": [\n"
-					//+ " \"" + strIdSort[0] + "\"," + strIdSort[1] + "\n"
-					+ " \"" + strIdSort[0] + "\"\n"
+					+ " " + strIdSort[0] + "\n"
 					+ "  ],\n"
 					+ "\"sort\": [\n"
-					+ "    {\"customerId.keyword\": \"asc\"}\n"
-					//+ "    ,{\"creationDate\": \"desc\"}\n"
-					//+ "  ,  {\"_shard_doc\": \"desc\"}\n"
-					+ "  ]"
-					
-					//+ ",  \"track_total_hits\": false "
+					+ "  {\"_shard_doc\": {\"order\": \"asc\"}}\n"
+					+ "  ],"
+					+ "  \"track_total_hits\": false "
 					+ "}";
 
 			AppLogService.debug("Request elastic : " + searchRequest);
@@ -158,8 +151,28 @@ public class ElasticService {
 	}
 
 	/**
+	 * closeElasticPit
+	 *
+	 * @param strPitId the PIT id to close
+	 */
+	public static void closeElasticPit( String strPitId )
+	{
+		try
+		{
+			HttpAccess httpAccess = new HttpAccess( );
+			String strUrl = AppPropertiesService.getProperty( Constants.PROPERTY_ELASTIC_PROVIDER_URL ) + "/_pit";
+			String requestBody = "{\"id\": \"" + strPitId + "\"}";
+			httpAccess.doDeleteJSON( strUrl, requestBody, null, null, null, null );
+		}
+		catch (HttpAccessException e)
+		{
+			AppLogService.error( "Error closing PIT: " + e.getMessage(), e);
+		}
+	}
+
+	/**
 	 * getElasticPitId
-	 * 
+	 *
 	 * @return the PIT
 	 */
 	public static String getElasticPitId(  )

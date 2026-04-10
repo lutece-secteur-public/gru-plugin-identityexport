@@ -75,71 +75,83 @@ public class ExportService {
 		final ProfileGenerator genProfile = new ProfileGenerator(profile);
 		final List<String> lstCertifCodes = getLstCertifCode( genProfile.getCertification( ) );
 
-		// get first result set of ELS
-		final String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, optProfile.get().isMonParis( )  );
-		if ( resultElastic == null || resultElastic.isEmpty( ) )
+		// open a PIT to ensure consistent results during pagination
+		final String strPitId = ElasticService.getElasticPitId( );
+		if ( strPitId == null || strPitId.isEmpty( ) )
 		{
-			return "nothing to export";
+			return "ERROR: unable to open PIT on Elasticsearch";
 		}
 
-		// write headers
-		genProfile.addContent( getHeaders( lstFieldsGuidCuid, lstFields ) ); 
-
-		final ElasticsearchResponseJSON response = _mapper.readValue(resultElastic, ElasticsearchResponseJSON.class);
-		final List<Hit> lstHits = response.getHits( ).getHits( );
-
-		String strSortId ="";
-		String[] strSortIdTab = new String[] {};
-		StringBuilder strContent = new StringBuilder( );
-		for ( final Hit hit : lstHits )
+		try
 		{
-			// get one line
-			strContent.append( getLineFromHit( hit, lstFields ) );
-
-			AppLogService.debug("shard : " + hit.getSort( )[0] );
-
-			strSortId = hit.getSort( )[0];
-			strSortIdTab = hit.getSort( );
-		}
-
-		// write first set of lines in file
-		genProfile.addContent( strContent.toString( ) );
-
-		// fetch results
-		//while ( strSortId != null && !strSortId.isEmpty() && strIdPit != null && !strIdPit.isEmpty())
-		while ( strSortId != null && !strSortId.isEmpty() )
-		{
-			final String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, lstFields, lstCertifCodes, optProfile.get().isMonParis( ));
-
-			if ( resultElasticScroll.isEmpty( ) )
+			// get first result set of ELS
+			final String resultElastic = ElasticService.selectElasticField( lstFields, lstCertifCodes, optProfile.get().isMonParis( ), strPitId );
+			if ( resultElastic == null || resultElastic.isEmpty( ) )
 			{
-				strSortId = StringUtils.EMPTY;
-				continue;
+				return "nothing to export";
 			}
 
-			final ElasticsearchResponseJSON responseElasticSearch = _mapper.readValue(resultElasticScroll, ElasticsearchResponseJSON.class);
-			//strIdPit = (String) responseElasticSearch.getPit_id();
+			// write headers
+			genProfile.addContent( getHeaders( lstFieldsGuidCuid, lstFields ) );
 
-			if ( !responseElasticSearch.getHits( ).getHits( ).isEmpty( ) )
+			final ElasticsearchResponseJSON response = _mapper.readValue(resultElastic, ElasticsearchResponseJSON.class);
+			final List<Hit> lstHits = response.getHits( ).getHits( );
+
+			String strSortId ="";
+			String[] strSortIdTab = new String[] {};
+			StringBuilder strContent = new StringBuilder( );
+			for ( final Hit hit : lstHits )
 			{
-				strContent = new StringBuilder( );
-				for ( final Hit hit : responseElasticSearch.getHits( ).getHits( ) )
+				// get one line
+				strContent.append( getLineFromHit( hit, lstFields ) );
+
+				AppLogService.debug("shard : " + hit.getSort( )[0] );
+
+				strSortId = hit.getSort( )[0];
+				strSortIdTab = hit.getSort( );
+			}
+
+			// write first set of lines in file
+			genProfile.addContent( strContent.toString( ) );
+
+			// fetch results
+			while ( strSortId != null && !strSortId.isEmpty() )
+			{
+				final String resultElasticScroll = ElasticService.selectElasticFieldSearchAfter(strSortIdTab, lstFields, lstCertifCodes, optProfile.get().isMonParis( ), strPitId);
+
+				if ( resultElasticScroll.isEmpty( ) )
 				{
-					strContent.append( getLineFromHit( hit, lstFields ) );
-
-					AppLogService.debug(" shard : " + hit.getSort( )[0]);
-
-					strSortId = hit.getSort( )[0];
-					strSortIdTab = hit.getSort( );
+					strSortId = StringUtils.EMPTY;
+					continue;
 				}
 
-				// write lines
-				genProfile.addContent( strContent.toString( ) );
+				final ElasticsearchResponseJSON responseElasticSearch = _mapper.readValue(resultElasticScroll, ElasticsearchResponseJSON.class);
+
+				if ( !responseElasticSearch.getHits( ).getHits( ).isEmpty( ) )
+				{
+					strContent = new StringBuilder( );
+					for ( final Hit hit : responseElasticSearch.getHits( ).getHits( ) )
+					{
+						strContent.append( getLineFromHit( hit, lstFields ) );
+
+						AppLogService.debug(" shard : " + hit.getSort( )[0]);
+
+						strSortId = hit.getSort( )[0];
+						strSortIdTab = hit.getSort( );
+					}
+
+					// write lines
+					genProfile.addContent( strContent.toString( ) );
+				}
+				else
+				{
+					strSortId = StringUtils.EMPTY;
+				}
 			}
-			else
-			{
-				strSortId = StringUtils.EMPTY;
-			}
+		}
+		finally
+		{
+			ElasticService.closeElasticPit( strPitId );
 		}
 
 		// finalize and  zip
