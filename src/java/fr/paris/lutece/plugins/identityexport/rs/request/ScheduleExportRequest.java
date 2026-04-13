@@ -10,6 +10,7 @@ import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.exporting.ExportModel
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.dto.exporting.ExportModelScheduleResponse;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.util.Constants;
 import fr.paris.lutece.plugins.identitystore.v3.web.rs.util.ResponseStatusFactory;
+import fr.paris.lutece.portal.service.progressmanager.ProgressManagerService;
 import fr.paris.lutece.plugins.identitystore.web.exception.ClientAuthorizationException;
 import fr.paris.lutece.plugins.identitystore.web.exception.DuplicatesConsistencyException;
 import fr.paris.lutece.plugins.identitystore.web.exception.IdentityStoreException;
@@ -66,9 +67,11 @@ public class ScheduleExportRequest extends AbstractIdentityStoreRequest {
 
     @Override
     protected ExportModelScheduleResponse doSpecificRequest() throws IdentityStoreException {
+        final String strProgressToken = ProgressManagerService.getInstance( ).registerFeed( "export-schedule-profile-" + exportModel.getId(), 1 );
         final ExportRequest extract = new ExportRequest();
         extract.setIdProfil(exportModel.getId());
         extract.setRecipientEmail(request.getEmail());
+        extract.setToken( strProgressToken );
         ExtractRequestHome.create(extract);
 
         final ExportModelScheduleResponse response = new ExportModelScheduleResponse();

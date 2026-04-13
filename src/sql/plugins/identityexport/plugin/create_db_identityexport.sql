@@ -26,5 +26,6 @@ CREATE TABLE identityexport_daemon_stack (
     id_profile int,
     date_create timestamp,
     recipient_email varchar(255),
+    progress_token varchar(255),
 PRIMARY KEY (id_profile)
 );

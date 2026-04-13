@@ -67,7 +67,7 @@ public class ElasticService {
 	    				+ "  \"sort\": [ \n"
 	    				+ "  {\"_shard_doc\": {\"order\": \"asc\"}}\n"
 	    				+ "  ],"
-	    				+ "  \"track_total_hits\": false "
+	    				+ "  \"track_total_hits\": true "
 	    				+ "  }"
 	    				;
 

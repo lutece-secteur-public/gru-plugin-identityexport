@@ -37,6 +37,7 @@ import fr.paris.lutece.portal.business.file.File;
 import fr.paris.lutece.portal.service.file.FileService;
 import fr.paris.lutece.portal.service.file.FileServiceException;
 import fr.paris.lutece.portal.service.file.IFileStoreServiceProvider;
+import fr.paris.lutece.portal.service.progressmanager.ProgressManagerService;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
@@ -48,12 +49,14 @@ public class ExportService {
 
 	/**
 	 * Process Export
-	 * 
+	 *
 	 * @param nIdProfile
+	 * @param recipientEmail
+	 * @param strProgressToken token for progress tracking via ProgressManagerService
 	 * @return message
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public static String generateExport( final int nIdProfile, final String recipientEmail ) throws IOException
+	public static String generateExport( final int nIdProfile, final String recipientEmail, final String strProgressToken ) throws IOException
 	{
 		final List<String> lstFields = new ArrayList<>( );
 		final List<String> lstFieldsGuidCuid = List.of(Constants.CUID_ATTRIBUTE_KEY, Constants.GUID_ATTRIBUTE_KEY);
@@ -82,6 +85,8 @@ public class ExportService {
 			return "ERROR: unable to open PIT on Elasticsearch";
 		}
 
+		final ProgressManagerService progressManagerService = ProgressManagerService.getInstance( );
+
 		try
 		{
 			// get first result set of ELS
@@ -96,6 +101,12 @@ public class ExportService {
 
 			final ElasticsearchResponseJSON response = _mapper.readValue(resultElastic, ElasticsearchResponseJSON.class);
 			final List<Hit> lstHits = response.getHits( ).getHits( );
+
+			// initialize progress feed with the total number of hits
+			if ( StringUtils.isNotBlank( strProgressToken ) && response.getHits( ).getTotal( ) != null )
+			{
+				progressManagerService.initFeed( strProgressToken, response.getHits( ).getTotal( ).getValue( ) );
+			}
 
 			String strSortId ="";
 			String[] strSortIdTab = new String[] {};
@@ -113,6 +124,12 @@ public class ExportService {
 
 			// write first set of lines in file
 			genProfile.addContent( strContent.toString( ) );
+
+			// update progress
+			if ( StringUtils.isNotBlank( strProgressToken ) )
+			{
+				progressManagerService.incrementSuccess( strProgressToken, lstHits.size( ) );
+			}
 
 			// fetch results
 			while ( strSortId != null && !strSortId.isEmpty() )
@@ -142,6 +159,12 @@ public class ExportService {
 
 					// write lines
 					genProfile.addContent( strContent.toString( ) );
+
+					// update progress
+					if ( StringUtils.isNotBlank( strProgressToken ) )
+					{
+						progressManagerService.incrementSuccess( strProgressToken, responseElasticSearch.getHits( ).getHits( ).size( ) );
+					}
 				}
 				else
 				{

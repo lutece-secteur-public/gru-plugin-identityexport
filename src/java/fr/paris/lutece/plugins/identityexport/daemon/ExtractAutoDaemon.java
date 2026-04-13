@@ -11,6 +11,7 @@ import fr.paris.lutece.plugins.identityexport.business.ExtractRequestHome;
 import fr.paris.lutece.plugins.identityexport.business.Profile;
 import fr.paris.lutece.plugins.identityexport.business.ProfileHome;
 import fr.paris.lutece.portal.service.daemon.Daemon;
+import fr.paris.lutece.portal.service.progressmanager.ProgressManagerService;
 
 public class ExtractAutoDaemon extends Daemon {
 
@@ -29,8 +30,10 @@ public class ExtractAutoDaemon extends Daemon {
             }
             Optional<ExportRequest> extractStore = ExtractRequestHome.findByPrimaryKey(profil.getId());
             if (extractStore.isEmpty()) {
+                final String strProgressToken = ProgressManagerService.getInstance( ).registerFeed( "export-auto-profile-" + profil.getId(), 1 );
                 ExportRequest extract = new ExportRequest();
                 extract.setIdProfil(profil.getId());
+                extract.setToken( strProgressToken );
                 ExtractRequestHome.create(extract);
             }
         }

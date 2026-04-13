@@ -58,6 +58,7 @@ import fr.paris.lutece.portal.service.file.FileService;
 import fr.paris.lutece.portal.service.file.IFileStoreServiceProvider;
 import fr.paris.lutece.portal.service.message.AdminMessage;
 import fr.paris.lutece.portal.service.message.AdminMessageService;
+import fr.paris.lutece.portal.service.progressmanager.ProgressManagerService;
 import fr.paris.lutece.portal.service.rbac.RBACService;
 import fr.paris.lutece.portal.service.security.SecurityTokenService;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
@@ -109,6 +110,7 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
     private static final String MARK_FILE_LINK_URL = "urlFile";
     private static final String MARK_PROFIL_CREATE_ACCESS = "profilCreateAccess";
     private static final String MARK_PROFIL_WRITE_ACCESS_MAP = "profilWriteAccessMap";
+    private static final String MARK_PROGRESS_TOKEN_MAP = "progressTokenMap";
 
     private static final String JSP_MANAGE_PROFILS = "jsp/admin/plugins/identityexport/ManageProfils.jsp";
 
@@ -166,11 +168,22 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
                    .filter(profile -> _listIdProfils.contains(profile.getId()))
                    .forEach(profile -> mapLinkBO.put( String.valueOf( profile.getId() ), fileStoreService.getFileDownloadUrlBO( profile.getFileName() + ".zip" ) ));
 
+        final Map<String, String> progressTokenMap = new HashMap<>();
+        final List<ExportRequest> activeExports = ExtractRequestHome.getExportRequestList( );
+        for ( final ExportRequest exportRequest : activeExports )
+        {
+            if ( exportRequest.getToken( ) != null )
+            {
+                progressTokenMap.put( String.valueOf( exportRequest.getIdProfil( ) ), exportRequest.getToken( ) );
+            }
+        }
+
         Map<String, Object> model = getPaginatedListModel( request, MARK_PROFIL_LIST, _listIdProfils, JSP_MANAGE_PROFILS );
         model.put( MARK_LST_PROFIL_DAEMON, ExtractRequestHome.getIdExportRequestList() );
         model.put( MARK_FILE_LINK_URL, mapLinkBO );
         model.put( MARK_PROFIL_CREATE_ACCESS, RBACService.isAuthorized(AccessExportProfileResource.RESOURCE_TYPE, RBAC.WILDCARD_RESOURCES_ID, AccessExportProfileResource.PERMISSION_CREATE, (User) getUser()));
         model.put( MARK_PROFIL_WRITE_ACCESS_MAP, writeAccessByProfilId );
+        model.put( MARK_PROGRESS_TOKEN_MAP, progressTokenMap );
 
         return getPage( PROPERTY_PAGE_TITLE_MANAGE_PROFILS, TEMPLATE_MANAGE_PROFILS, model );
     }
@@ -445,8 +458,11 @@ public class ProfilJspBean extends AbstractManageExtractionJspBean <Integer, Pro
         Profile profilExtract = optProfil.orElseThrow( ( ) -> new AppException(ERROR_RESOURCE_NOT_FOUND ) );
     	
     	
+    	final String strProgressToken = ProgressManagerService.getInstance( ).registerFeed( "export-profile-" + nId, 1 );
+
     	ExportRequest extract = new ExportRequest();
     	extract.setIdProfil( profilExtract.getId( ) );
+    	extract.setToken( strProgressToken );
     	ExtractRequestHome.create( extract );
     	
     	//ExtractDaemon exDaemon = new ExtractDaemon( lstFieldsExtract, profilExtract.getCertification( ) );

@@ -56,7 +56,9 @@
 				<@input type="password" id="password${profil.id}" name="password${profil.id}"  maxlength=255 value='${profil.password!\'\'}' params="disabled" />
 			</td>
 			<td>
-				<@progress token='idExtract' progressId="chargement${profil.id}" />
+				<#if progressTokenMap[profil.id?c]??>
+					<@progress token=progressTokenMap[profil.id?c] progressId="chargement${profil.id}" />
+				</#if>
 			</td>
         	<td>
 				<#if profilWriteAccessMap[profil.id?c]>
@@ -85,58 +87,6 @@
 </@box>
 
 <script>
-document.addEventListener( "DOMContentLoaded", function(){
-	
-	var arr=[<#list lstIdProfil as idProfilExtract>${idProfilExtract?c},</#list>];
-	for (var item in arr) {
-		   //alert(arr[item]);
-		   let i = 0;
-			if ( i == 0 ){
-		    i = 1;
-		    var strExtract = 'chargement'+arr[item];
-		    const elem = document.getElementById(strExtract);
-		    let width = 10;
-		    const idInterval = setInterval( progressFrame, 100);
-		    function progressFrame() {
-		      if ( width >= 100) {
-		        clearInterval( idInterval );
-		        i = 0;
-		      } else {
-		        width++;
-		        elem.style.width = width + "%";
-		        elem.setAttribute('aria-value-now', width )
-		        elem.textContent = width + "%";
-		      }
-		    }
-		}
-	
-	}
-});
-
-function progressBarExtract( idProfil )
-{
-	let i = 0;
-	if ( i == 0 ){
-    i = 1;
-    let strExtract = 'chargement'+idProfil;
-    
-    const elem = document.getElementById(strExtract);
-    let width = 10;
-    const idInterval = setInterval( progressFrame, 100);
-    function progressFrame() {
-      if ( width >= 100) {
-        clearInterval( idInterval );
-        i = 0;
-      } else {
-        width++;
-        elem.style.width = width + "%";
-        elem.setAttribute('aria-value-now', width )
-        elem.textContent = width + "%";
-      }
-    }
-	}
-}
-
 function copyFunction(idPassword) {
 	  // Get the text field
 	  var copyText = document.getElementById("password"+idPassword);
