@@ -60,7 +60,11 @@ public class Profile implements Serializable
     private String _strFileName;
     
     private boolean _bMonParis;
-    
+
+    private boolean _bExportCuid;
+
+    private boolean _bExportGuid;
+
     private boolean _bAutoExtract;
 
     private Integer _nAutoExtractInterval;
@@ -149,6 +153,22 @@ public class Profile implements Serializable
 
 	public void setMonParis(boolean bMonParis) {
 		this._bMonParis = bMonParis;
+	}
+
+	public boolean isExportCuid() {
+		return _bExportCuid;
+	}
+
+	public void setExportCuid(boolean bExportCuid) {
+		this._bExportCuid = bExportCuid;
+	}
+
+	public boolean isExportGuid() {
+		return _bExportGuid;
+	}
+
+	public void setExportGuid(boolean bExportGuid) {
+		this._bExportGuid = bExportGuid;
 	}
 
 	public boolean isAutoExtract() {

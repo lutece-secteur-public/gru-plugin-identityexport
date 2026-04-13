@@ -5,6 +5,8 @@ CREATE TABLE identityexport_profile (
     certifier_code varchar(255) default '' NOT NULL,
     file_name varchar(255) default '',
     is_monparis SMALLINT,
+    is_export_cuid SMALLINT DEFAULT 1,
+    is_export_guid SMALLINT DEFAULT 1,
     is_auto_extract SMALLINT,
     auto_extract_interval int,
     password varchar(255) default '',

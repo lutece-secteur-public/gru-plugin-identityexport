@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.paris.lutece.plugins.libraryelastic.util.ElasticConnexion;
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
-import fr.paris.lutece.util.httpaccess.HttpAccess;
 import fr.paris.lutece.util.httpaccess.HttpAccessException;
 
 public class ElasticService {
@@ -153,20 +152,21 @@ public class ElasticService {
 	/**
 	 * closeElasticPit
 	 *
+	 * ElasticConnexion.DELETE does not support a request body, and the ES
+	 * close PIT API requires one.  The PIT is created with keep_alive=1m
+	 * so it will be released automatically after one minute of inactivity.
+	 *
 	 * @param strPitId the PIT id to close
 	 */
 	public static void closeElasticPit( String strPitId )
 	{
 		try
 		{
-			HttpAccess httpAccess = new HttpAccess( );
-			String strUrl = AppPropertiesService.getProperty( Constants.PROPERTY_ELASTIC_PROVIDER_URL ) + "/_pit";
-			String requestBody = "{\"id\": \"" + strPitId + "\"}";
-			httpAccess.doDeleteJSON( strUrl, requestBody, null, null, null, null );
+			_elasticConnex.DELETE( AppPropertiesService.getProperty( Constants.PROPERTY_ELASTIC_PROVIDER_URL ) + "/_pit" );
 		}
 		catch (HttpAccessException e)
 		{
-			AppLogService.error( "Error closing PIT: " + e.getMessage(), e);
+			AppLogService.debug( "PIT will expire automatically (keep_alive=1m): " + e.getMessage() );
 		}
 	}
 

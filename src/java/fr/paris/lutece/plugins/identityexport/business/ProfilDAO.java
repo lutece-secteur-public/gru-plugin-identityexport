@@ -50,12 +50,12 @@ import java.util.Optional;
 public final class ProfilDAO implements IProfilDAO
 {
     // Constants
-    private static final String ALL_COLUMNS = "id_profile, name, certifier_code, file_name, is_monparis, is_auto_extract, auto_extract_interval, password";
+    private static final String ALL_COLUMNS = "id_profile, name, certifier_code, file_name, is_monparis, is_export_cuid, is_export_guid, is_auto_extract, auto_extract_interval, password";
 
     private static final String SQL_QUERY_SELECT = "SELECT " + ALL_COLUMNS + " FROM identityexport_profile WHERE id_profile = ?";
-    private static final String SQL_QUERY_INSERT = "INSERT INTO identityexport_profile ( name, certifier_code, file_name, is_monparis, is_auto_extract, auto_extract_interval, password ) VALUES ( ?, ?, ?, ?, ?, ?, ? ) ";
+    private static final String SQL_QUERY_INSERT = "INSERT INTO identityexport_profile ( name, certifier_code, file_name, is_monparis, is_export_cuid, is_export_guid, is_auto_extract, auto_extract_interval, password ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? ) ";
     private static final String SQL_QUERY_DELETE = "DELETE FROM identityexport_profile WHERE id_profile = ? ";
-    private static final String SQL_QUERY_UPDATE = "UPDATE identityexport_profile SET name = ?, certifier_code = ?, file_name = ?, is_monparis = ?, is_auto_extract = ?, auto_extract_interval = ?, password = ? WHERE id_profile = ?";
+    private static final String SQL_QUERY_UPDATE = "UPDATE identityexport_profile SET name = ?, certifier_code = ?, file_name = ?, is_monparis = ?, is_export_cuid = ?, is_export_guid = ?, is_auto_extract = ?, auto_extract_interval = ?, password = ? WHERE id_profile = ?";
     private static final String SQL_QUERY_SELECTALL = "SELECT " + ALL_COLUMNS + " FROM identityexport_profile";
     private static final String SQL_QUERY_SELECTALL_ID = "SELECT id_profile FROM identityexport_profile";
     private static final String SQL_QUERY_SELECTALL_AUTO_EXTRACT = "SELECT " + ALL_COLUMNS + " FROM identityexport_profile WHERE is_auto_extract = 1 ";
@@ -70,6 +70,8 @@ public final class ProfilDAO implements IProfilDAO
         profil.setCertification( daoUtil.getString( nIndex++ ) );
         profil.setFileName( daoUtil.getString( nIndex++ ) );
         profil.setMonParis( daoUtil.getBoolean( nIndex++ ) );
+        profil.setExportCuid( daoUtil.getBoolean( nIndex++ ) );
+        profil.setExportGuid( daoUtil.getBoolean( nIndex++ ) );
         profil.setAutoExtract( daoUtil.getBoolean( nIndex++ ) );
         final int interval = daoUtil.getInt(nIndex++);
         profil.setAutoExtractInterval( interval > 0 ? interval : null );
@@ -91,6 +93,8 @@ public final class ProfilDAO implements IProfilDAO
             daoUtil.setString( nIndex++ , profil.getCertification( ) );
             daoUtil.setString( nIndex++ , profil.getFileName( ) );
             daoUtil.setBoolean( nIndex++, profil.isMonParis( ) );
+            daoUtil.setBoolean( nIndex++, profil.isExportCuid( ) );
+            daoUtil.setBoolean( nIndex++, profil.isExportGuid( ) );
             daoUtil.setBoolean( nIndex++, profil.isAutoExtract() );
             if (profil.getAutoExtractInterval() == null) {
                 daoUtil.setIntNull(nIndex++);
@@ -148,11 +152,13 @@ public final class ProfilDAO implements IProfilDAO
         try( DAOUtil daoUtil = new DAOUtil( SQL_QUERY_UPDATE, plugin ) )
         {
 	        int nIndex = 1;
-	        
+
             daoUtil.setString( nIndex++ , profil.getName( ) );
             daoUtil.setString( nIndex++ , profil.getCertification( ) );
             daoUtil.setString( nIndex++ , profil.getFileName( ) );
             daoUtil.setBoolean( nIndex++, profil.isMonParis( ) );
+            daoUtil.setBoolean( nIndex++, profil.isExportCuid( ) );
+            daoUtil.setBoolean( nIndex++, profil.isExportGuid( ) );
             daoUtil.setBoolean( nIndex++, profil.isAutoExtract() );
             if (profil.getAutoExtractInterval() == null) {
                 daoUtil.setIntNull(nIndex++);

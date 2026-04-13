@@ -59,7 +59,6 @@ public class ExportService {
 	public static String generateExport( final int nIdProfile, final String recipientEmail, final String strProgressToken ) throws IOException
 	{
 		final List<String> lstFields = new ArrayList<>( );
-		final List<String> lstFieldsGuidCuid = List.of(Constants.CUID_ATTRIBUTE_KEY, Constants.GUID_ATTRIBUTE_KEY);
 
 		final Optional<Profile> optProfile = ProfileHome.findByPrimaryKey( nIdProfile );
 
@@ -77,6 +76,16 @@ public class ExportService {
 		final Profile profile = optProfile.get();
 		final ProfileGenerator genProfile = new ProfileGenerator(profile);
 		final List<String> lstCertifCodes = getLstCertifCode( genProfile.getCertification( ) );
+
+		final List<String> lstFieldsGuidCuid = new ArrayList<>( );
+		if ( profile.isExportCuid( ) )
+		{
+			lstFieldsGuidCuid.add( Constants.CUID_ATTRIBUTE_KEY );
+		}
+		if ( profile.isExportGuid( ) )
+		{
+			lstFieldsGuidCuid.add( Constants.GUID_ATTRIBUTE_KEY );
+		}
 
 		// open a PIT to ensure consistent results during pagination
 		final String strPitId = ElasticService.getElasticPitId( );
@@ -114,7 +123,7 @@ public class ExportService {
 			for ( final Hit hit : lstHits )
 			{
 				// get one line
-				strContent.append( getLineFromHit( hit, lstFields ) );
+				strContent.append( getLineFromHit( hit, lstFields, lstFieldsGuidCuid ) );
 
 				AppLogService.debug("shard : " + hit.getSort( )[0] );
 
@@ -149,7 +158,7 @@ public class ExportService {
 					strContent = new StringBuilder( );
 					for ( final Hit hit : responseElasticSearch.getHits( ).getHits( ) )
 					{
-						strContent.append( getLineFromHit( hit, lstFields ) );
+						strContent.append( getLineFromHit( hit, lstFields, lstFieldsGuidCuid ) );
 
 						AppLogService.debug(" shard : " + hit.getSort( )[0]);
 
@@ -174,7 +183,7 @@ public class ExportService {
 		}
 		finally
 		{
-			ElasticService.closeElasticPit( strPitId );
+			//ElasticService.closeElasticPit( strPitId );
 		}
 
 		// finalize and  zip
@@ -241,7 +250,7 @@ public class ExportService {
 	 * @return the string
 	 * @throws JsonProcessingException 
 	 */
-	private static String getLineFromHit(Hit hit, List<String> listAttributesKeys ) throws JsonProcessingException 
+	private static String getLineFromHit(Hit hit, List<String> listAttributesKeys, List<String> listIdFields ) throws JsonProcessingException
 	{
 		StringBuilder strContent = new StringBuilder( );
 
@@ -260,8 +269,17 @@ public class ExportService {
 		StringJoiner joinerFieldValues = new StringJoiner( AppPropertiesService.getProperty( Constants.PROPERTY_SEPARATOR )  );
 		StringJoiner joinerCertifValue = new StringJoiner( AppPropertiesService.getProperty( Constants.PROPERTY_SEPARATOR ) );
 
-		joinerFieldValues.add( cuid );
-		joinerFieldValues.add( guid );
+		for ( String idField : listIdFields )
+		{
+			if ( Constants.CUID_ATTRIBUTE_KEY.equals( idField ) )
+			{
+				joinerFieldValues.add( cuid );
+			}
+			else if ( Constants.GUID_ATTRIBUTE_KEY.equals( idField ) )
+			{
+				joinerFieldValues.add( guid );
+			}
+		}
 
 		for ( String attr : listAttributesKeys )
 		{	

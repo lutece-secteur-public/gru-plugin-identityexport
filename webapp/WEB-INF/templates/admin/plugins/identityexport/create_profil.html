@@ -19,6 +19,12 @@
 		<@formGroup labelFor='monparis' labelKey='#i18n{identityexport.modify_profil.labelConnectedIdentitiesOnly}' mandatory=true>
           	<@checkBox id="monParis" name="monParis"  value="1" checked=profil.monParis!'false' />
 		</@formGroup>
+		<@formGroup labelFor='exportCuid' labelKey='#i18n{identityexport.modify_profil.labelExportCuid}'>
+          	<@checkBox id="exportCuid" name="exportCuid"  value="1" checked=profil.exportCuid!'true' />
+		</@formGroup>
+		<@formGroup labelFor='exportGuid' labelKey='#i18n{identityexport.modify_profil.labelExportGuid}'>
+          	<@checkBox id="exportGuid" name="exportGuid"  value="1" checked=profil.exportGuid!'true' />
+		</@formGroup>
 		<@formGroup labelFor='autoExtract' labelKey='#i18n{identityexport.modify_profil.labelAutoExtract}' mandatory=true>
           	<@checkBox id="autoExtract" name="autoExtract"  value="1" checked=profil.autoExtract!'false' />
 		</@formGroup>
